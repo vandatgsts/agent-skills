@@ -1,12 +1,14 @@
 ---
 name: android-kotlin-native-indexing
-description: Creates deep semantic indexes for native Android Kotlin/Java code at function level. Use when debugging native Android issues, tracing ads/billing/lifecycle flows, analyzing coroutines or MethodChannels, or understanding mixed Flutter + native Android projects without reopening entire files.
+description: Creates architecture-level Android code indexes and maintains Android symbol indexes for method-level lookup.
 ---
 # ANDROID / KOTLIN NATIVE CODE INDEXING SKILL
 
 You are an Android/Kotlin Native Codebase Indexing Agent.
 
-Your responsibility is to analyze and maintain a method-level semantic index for the native Android side of this project.
+Your responsibility is to analyze and maintain an architecture-level Android code index for the native Android side of this project, while storing detailed method-level metadata in:
+
+- `.ai/indexes/symbols/android_symbols.json`
 
 The goal is to make Kotlin/Java Android code easy to query without rereading entire source files.
 
@@ -21,7 +23,11 @@ Always maintain these files at project root:
 
 Do not generate shallow indexes.
 Do not only list file paths.
-Every important Kotlin/Java file must be indexed at class/method level.
+Every important Kotlin/Java file must be indexed at architecture and feature level.
+
+Detailed method-level indexing must be stored in:
+
+- `.ai/indexes/symbols/android_symbols.json`
 
 ---
 
@@ -77,74 +83,13 @@ For every important Kotlin/Java file, collect:
 - objects
 - interfaces
 - companion objects
-- fields
-- state variables
-- lifecycle methods
-- functions
-- function signatures
-- start_line
-- end_line
-- visibility
-- suspend/async behavior
-- coroutine scope usage
-- thread context
-- called_functions
-- callers
-- reads_state
-- writes_state
-- ads_calls
-- billing_calls
-- firebase_calls
-- api_calls
-- navigation_actions
-- method_channel_handlers
-- callbacks/listeners
-- side_effects
+- important properties
 - related_files
 - keywords
 - risks
 - TODO/FIXME notes
 
 ---
-
-# METHOD-LEVEL INDEX REQUIREMENT
-
-For every Kotlin/Java method/function, always include:
-
-```json
-{
-  "name": "",
-  "signature": "",
-  "start_line": 0,
-  "end_line": 0,
-  "visibility": "public/private/protected/internal",
-  "is_suspend": false,
-  "is_override": false,
-  "parameters": [],
-  "return_type": "",
-  "purpose": "",
-  "called_functions": [],
-  "callers": [],
-  "reads_state": [],
-  "writes_state": [],
-  "ads_calls": [],
-  "billing_calls": [],
-  "firebase_calls": [],
-  "method_channel_handlers": [],
-  "callbacks": [],
-  "side_effects": [],
-  "lifecycle_dependency": "",
-  "thread_context": "main/io/default/unknown",
-  "related_files": [],
-  "keywords": [],
-  "risks": []
-}
-```
-
-The index must be detailed enough to answer most architecture/debug questions without opening the full source file.
-
----
-
 # ANDROID/KOTLIN-SPECIFIC DETECTION
 
 Detect and index:
@@ -286,7 +231,11 @@ For billing-related files, always detect:
 
 # FLOW MAPPING
 
-Detect and map Android native flows:
+Detect and map Android native flows.
+
+Also group flows into related features when possible.
+
+Examples of flows to detect:
 
 - app startup flow
 - splash native flow
@@ -301,25 +250,44 @@ Detect and map Android native flows:
 - native image processing flow
 - permission flow
 
+Each flow should:
+- reference related features
+- reference related symbols
+- reference important files
+- describe flow transitions
+- describe important side effects
+- describe native ↔ Flutter interactions when applicable
+
 Represent flow steps like:
 
 ```json
 {
   "name": "Reward Ads Native Flow",
+  "feature": "reward_ads",
   "steps": [
     {
       "file": "android/app/src/main/kotlin/.../RewardAdsManager.kt",
-      "class": "RewardAdsManager",
-      "function": "loadRewardAd",
-      "line": 42,
+      "symbol": "RewardAdsManager.loadRewardAd",
       "action": "Loads rewarded ad using AdMob SDK"
+    },
+    {
+      "file": "android/app/src/main/kotlin/.../RewardAdsManager.kt",
+      "symbol": "RewardAdsManager.showRewardAd",
+      "action": "Displays rewarded ad and waits for reward callback"
     }
+  ],
+  "related_symbols": [
+    "RewardAdsManager.loadRewardAd",
+    "RewardAdsManager.showRewardAd",
+    "MainActivity.configureFlutterEngine"
+  ],
+  "related_features": [
+    "reward_ads",
+    "premium"
   ]
 }
 ```
-
 ---
-
 # REQUIRED JSON STRUCTURE
 
 `codeindex_android.json` must follow this structure:
@@ -337,6 +305,7 @@ Represent flow steps like:
   "ads": [],
   "billing": [],
   "flows": [],
+  "features": [],
   "files": [
     {
       "path": "",
@@ -346,7 +315,10 @@ Represent flow steps like:
       "purpose": "",
       "imports": [],
       "classes": [],
-      "top_level_functions": [],
+      "objects": [],
+      "interfaces": [],
+      "main_symbols": [],
+      "related_features": [],
       "related_files": [],
       "keywords": [],
       "risks": []
@@ -359,9 +331,25 @@ Represent flow steps like:
 }
 ```
 
+`main_symbols` should reference symbols stored in:
+
+- `.ai/indexes/symbols/android_symbols.json`
+
+Do not store detailed method/function metadata inside `codeindex_android.json`, including:
+- full signatures
+- line ranges
+- caller/callee graphs
+- state reads/writes
+- side effects
+- callback chains
+- thread context
+
+Those belong in:
+
+- `.ai/indexes/symbols/android_symbols.json`
 ---
 
-# EXAMPLE FILE INDEX
+# EXAMPLE CODE INDEX FILE ENTRY
 
 ```json
 {
@@ -369,102 +357,47 @@ Represent flow steps like:
   "language": "kotlin",
   "package": "com.example.app.ads",
   "layer": "native/ads",
-  "purpose": "Manages loading and showing AdMob rewarded ads.",
+  "purpose": "Handles rewarded ad loading and display flow.",
   "imports": [
     "com.google.android.gms.ads.rewarded.RewardedAd"
   ],
   "classes": [
-    {
-      "name": "RewardAdsManager",
-      "type": "object",
-      "start_line": 12,
-      "end_line": 210,
-      "fields": [
-        {
-          "name": "rewardedAd",
-          "type": "RewardedAd?",
-          "line": 18,
-          "purpose": "Cached rewarded ad instance"
-        }
-      ],
-      "functions": [
-        {
-          "name": "loadRewardAd",
-          "signature": "fun loadRewardAd(context: Context, adUnitId: String)",
-          "start_line": 40,
-          "end_line": 88,
-          "visibility": "public",
-          "is_suspend": false,
-          "is_override": false,
-          "parameters": [
-            "context: Context",
-            "adUnitId: String"
-          ],
-          "return_type": "Unit",
-          "purpose": "Loads a rewarded ad and stores it in memory.",
-          "called_functions": [
-            "RewardedAd.load"
-          ],
-          "callers": [
-            "MainActivity.configureFlutterEngine",
-            "RewardAdsManager.showRewardAd"
-          ],
-          "reads_state": [],
-          "writes_state": [
-            "rewardedAd",
-            "isLoading"
-          ],
-          "ads_calls": [
-            "RewardedAd.load"
-          ],
-          "billing_calls": [],
-          "firebase_calls": [],
-          "method_channel_handlers": [
-            "loadRewardAd"
-          ],
-          "callbacks": [
-            "RewardedAdLoadCallback.onAdLoaded",
-            "RewardedAdLoadCallback.onAdFailedToLoad"
-          ],
-          "side_effects": [
-            "Starts network ad loading",
-            "Caches rewarded ad instance"
-          ],
-          "lifecycle_dependency": "Requires valid Activity/Context",
-          "thread_context": "main",
-          "related_files": [
-            "android/app/src/main/kotlin/com/example/app/MainActivity.kt"
-          ],
-          "keywords": [
-            "reward ads",
-            "admob",
-            "preload",
-            "native ads"
-          ],
-          "risks": [
-            "Context leak if Activity is stored strongly",
-            "Race condition if show is called before load completes"
-          ]
-        }
-      ]
-    }
+    "RewardAdsManager"
   ],
-  "related_files": [],
-  "keywords": ["reward ads", "admob", "native"],
-  "risks": []
+  "objects": [],
+  "interfaces": [],
+  "main_symbols": [
+    "RewardAdsManager.loadRewardAd",
+    "RewardAdsManager.showRewardAd",
+    "RewardAdsManager.rewardedAd"
+  ],
+  "related_features": [
+    "reward_ads",
+    "premium"
+  ],
+  "related_files": [
+    "android/app/src/main/kotlin/com/example/app/MainActivity.kt"
+  ],
+  "keywords": [
+    "reward ads",
+    "admob",
+    "premium"
+  ],
+  "risks": [
+    "Reward flow depends on valid Activity lifecycle."
+  ]
 }
 ```
-
 ---
-
 # QUERY RULES
 
 Before answering Android/Kotlin native questions:
 
-1. Read `codeindex_android.json` first.
-2. Search by function name, class name, lifecycle method, manager, keyword, or flow name.
-3. Use line ranges from the index.
-4. Only open full source files if:
+1. Read `codeindex_android.json` for architecture, feature, and flow context.
+2. Read `.ai/indexes/symbols/android_symbols.json` for exact method/class lookup.
+3. Search symbol index by function name, class name, lifecycle method, manager, callback, MethodChannel handler, keyword, or flow name.
+4. Use line ranges from `android_symbols.json`.
+5. Only open full source files if:
    - the method body is needed
    - the index is missing details
    - code editing is required
@@ -479,3 +412,282 @@ Avoid reading entire files when method-level index already answers the question.
 Be concise, technical, and traceable.
 Always mention file path and method name when relevant.
 Prefer lifecycle chains, callback chains, and dependency relationships over generic summaries.
+
+# REQUIRED SYMBOL OUTPUT
+
+Whenever generating or updating Android native indexes:
+
+ALWAYS maintain:
+
+- `.ai/indexes/symbols/android_symbols.json`
+
+Do not only generate:
+- `CODE_INDEX_ANDROID.md`
+- `codeindex_android.json`
+
+Symbol indexes are mandatory.
+
+Indexes and symbol files are part of the source of truth.
+
+Never leave them outdated after code modifications.
+
+---
+
+# REQUIRED ANDROID SYMBOL INDEXING
+
+For every important Kotlin/Java entity, generate/update symbols:
+
+- Activities
+- Fragments
+- ViewModels
+- Managers
+- Services
+- Repositories
+- methods/functions
+- suspend functions
+- lifecycle methods
+- StateFlow/SharedFlow
+- ads callbacks
+- billing callbacks
+- Firebase handlers
+- MethodChannel handlers
+- listeners
+- constants
+
+---
+# REQUIRED ANDROID SYMBOL STRUCTURE
+
+`.ai/indexes/symbols/android_symbols.json` must follow this structure:
+
+```json
+{
+  "project_name": "",
+  "platform": "android_native",
+  "language": "kotlin/java",
+  "symbols": []
+}
+```
+---
+# REQUIRED ANDROID SYMBOL METADATA
+
+Every Android symbol must include:
+
+```json
+{
+  "name": "",
+  "qualified_name": "",
+  "type": "",
+  "platform": "android",
+  "language": "kotlin",
+  "file": "",
+  "owner": "",
+  "signature": "",
+  "start_line": 0,
+  "end_line": 0,
+  "is_suspend": false,
+  "calls": [],
+  "called_by": [],
+  "reads_state": [],
+  "writes_state": [],
+  "ads_calls": [],
+  "billing_calls": [],
+  "firebase_calls": [],
+  "method_channel_handlers": [],
+  "callbacks": [],
+  "side_effects": [],
+  "lifecycle": "",
+  "related_symbols": [],
+  "related_files": [],
+  "thread_context": "",
+  "risks": [],
+  "tags": []
+}
+```
+---
+# EXAMPLE SYMBOL ENTRY
+
+```json
+{
+  "name": "loadRewardAd",
+  "qualified_name": "RewardAdsManager.loadRewardAd",
+  "type": "method",
+  "platform": "android",
+  "language": "kotlin",
+  "file": "android/app/src/main/kotlin/com/example/app/ads/RewardAdsManager.kt",
+  "owner": "RewardAdsManager",
+  "signature": "fun loadRewardAd(context: Context, adUnitId: String)",
+  "start_line": 40,
+  "end_line": 88,
+  "is_suspend": false,
+  "calls": [
+    "RewardedAd.load"
+  ],
+  "called_by": [
+    "MainActivity.configureFlutterEngine"
+  ],
+  "reads_state": [],
+  "writes_state": [
+    "rewardedAd",
+    "isLoading"
+  ],
+  "ads_calls": [
+    "RewardedAd.load"
+  ],
+  "billing_calls": [],
+  "firebase_calls": [],
+  "method_channel_handlers": [
+    "loadRewardAd"
+  ],
+  "side_effects": [
+    "Caches rewarded ad instance"
+  ],
+  "related_symbols": [
+    "RewardAdsManager.showRewardAd"
+  ],
+  "related_files": [
+    "android/app/src/main/kotlin/com/example/app/MainActivity.kt"
+  ],
+  "thread_context": "main",
+  "tags": [
+    "reward_ads",
+    "admob"
+  ]
+}
+```
+---
+
+# AUTOMATIC ANDROID SYMBOL MAINTENANCE
+
+Whenever:
+- creating code
+- editing code
+- refactoring
+- renaming functions/classes/routes
+- changing lifecycle logic
+- changing ads/billing logic
+- changing MethodChannel handlers
+
+ALWAYS update:
+- `android_symbols.json`
+- caller/callee relationships
+- related flows
+- related feature indexes
+
+Never leave symbol indexes outdated.
+
+Do NOT regenerate full symbol indexes unless necessary.
+
+Prefer incremental updates for changed symbols only.
+
+Update affected callers/callees transitively when symbol relationships change.
+
+---
+
+# SYMBOL QUERY RULES
+
+Before opening full source files:
+
+1. Search `android_symbols.json` first.
+
+2. Search by:
+   - exact symbol name
+   - qualified name
+   - tags
+   - callers/callees
+   - lifecycle methods
+   - ads callbacks
+   - billing callbacks
+   - MethodChannel handlers
+   - feature keywords
+
+3. Only open source files if:
+   - implementation details are required
+   - the symbol index lacks information
+   - architecture tracing fails
+   - code editing is required
+
+Prefer symbol-level retrieval over full file scanning.
+
+---
+
+# CROSS-LANGUAGE BRIDGE TRACKING
+
+Track Flutter ↔ Android native bridges:
+
+Flutter widget/controller
+→ MethodChannel.invokeMethod(...)
+→ Android MethodChannel handler
+→ Native manager/service
+→ callback/result
+→ Flutter state update
+
+Maintain symbol links between:
+- Flutter MethodChannel calls
+- Kotlin handlers
+- Native managers
+- Ads callbacks
+- Billing callbacks
+
+Track bidirectional relationships between:
+- Flutter invokeMethod calls
+- Android MethodChannel handlers
+- returned callbacks/results
+- Flutter state updates triggered by native results
+
+---
+# INDEX LAYER RESPONSIBILITY
+
+Use:
+
+- `codeindex_android.json`
+for:
+- architecture
+- feature relationships
+- module structure
+- flow mapping
+- important files
+
+Use:
+
+- `.ai/indexes/symbols/android_symbols.json`
+for:
+- exact method lookup
+- caller/callee tracing
+- line ranges
+- state reads/writes
+- callback chains
+- side effects
+- ads/billing tracing
+- lifecycle tracing
+
+Never duplicate deep method-level metadata inside `codeindex_android.json`.
+
+Avoid storing duplicated semantic data across:
+- code indexes
+- symbol indexes
+- feature indexes
+
+Each retrieval layer should have a distinct responsibility.
+
+---
+# LARGE PROJECT OPTIMIZATION
+
+For large Android projects:
+
+- prefer incremental indexing
+- avoid regenerating full indexes
+- update only affected modules/files/symbols
+- preserve stable symbol references
+- preserve existing flow mappings when unchanged
+
+---
+# OPTIMIZATION PRIORITIES
+
+Always prioritize:
+- symbol-level retrieval
+- function-level tracing
+- caller/callee relationships
+- low token usage
+- incremental symbol updates
+- cross-language tracing
+- semantic searchability

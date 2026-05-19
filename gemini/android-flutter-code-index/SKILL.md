@@ -1,28 +1,52 @@
 ---
-name: flutter-function-level-indexing
-description: Creates deep semantic indexes for Flutter/Dart projects at function level. Use when working with large Flutter codebases, tracing feature flows, debugging controllers/routes/API calls, reducing token usage, or understanding architecture without rereading entire files.
+name: flutter-code-indexing
+description: Creates architecture-level Flutter/Dart code indexes and maintains Flutter symbol indexes for function-level lookup. Use when working with large Flutter codebases, tracing feature flows, debugging controllers/routes/API calls, reducing token usage, or understanding architecture without rereading entire files.
 ---
 
 # FLUTTER / DART CODE INDEXING SKILL
 
 You are a Flutter/Dart Codebase Indexing Agent.
 
-Your responsibility is to analyze and maintain a function-level semantic index for the Flutter/Dart side of this project.
+Your responsibility is to maintain two separate retrieval layers:
 
-The goal is to make Flutter code easy to query without rereading entire source files.
+1. `codeindex_flutter.json`
+   - architecture
+   - modules
+   - features
+   - flows
+   - file relationships
+   - important files
+
+2. `.ai/indexes/symbols/flutter_symbols.json`
+   - classes
+   - methods/functions
+   - routes
+   - state variables
+   - caller/callee relationships
+   - line ranges
+   - API calls
+   - navigation actions
+   - MethodChannel calls
+
+The goal is to make Flutter code easy to query without rereading entire source files, while avoiding duplicated data between code indexes and symbol indexes.
 
 ---
 
 # OUTPUT FILES
 
-Always maintain these files at project root:
+Always maintain these files:
 
-- CODE_INDEX_FLUTTER.md
-- codeindex_flutter.json
+- `CODE_INDEX_FLUTTER.md`
+- `codeindex_flutter.json`
+- `.ai/indexes/symbols/flutter_symbols.json`
 
 Do not generate shallow indexes.
-Do not only list file paths.
-Every important Dart file must be indexed at class/function level.
+
+Do not duplicate full function-level details inside `codeindex_flutter.json`.
+
+Function-level details must live in:
+
+- `.ai/indexes/symbols/flutter_symbols.json`
 
 ---
 
@@ -30,7 +54,7 @@ Every important Dart file must be indexed at class/function level.
 
 Analyze:
 
-- lib/**/*.dart
+- `lib/**/*.dart`
 - Dart widgets
 - screens/pages
 - controllers
@@ -51,22 +75,58 @@ Analyze:
 
 Ignore:
 
-- build/
-- .dart_tool/
+- `build/`
+- `.dart_tool/`
 - generated files
-- *.g.dart
-- *.freezed.dart
-- *.gr.dart
-- .idea/
-- .vscode/
-- android/build/
-- ios/Pods/
+- `*.g.dart`
+- `*.freezed.dart`
+- `*.gr.dart`
+- `.idea/`
+- `.vscode/`
+- `android/build/`
+- `ios/Pods/`
+
+---
+
+# CODE INDEX RESPONSIBILITY
+
+`codeindex_flutter.json` is the macro-level architecture index.
+
+It should contain:
+
+- project overview
+- architecture summary
+- modules
+- entry points
+- routes
+- method channels
+- feature flows
+- file responsibilities
+- important files
+- related files
+- risks
+- dead code
+- duplicate logic
+
+It should NOT contain detailed method/function metadata such as:
+
+- full function signatures
+- start/end line for every function
+- caller/callee graph
+- state reads/writes
+- API calls per function
+- navigation actions per function
+- side effects per function
+
+Those belong in:
+
+- `.ai/indexes/symbols/flutter_symbols.json`
 
 ---
 
 # REQUIRED FILE INDEX
 
-For every important Dart file, collect:
+For every important Dart file, collect only file-level and architecture-level information:
 
 - path
 - language
@@ -78,65 +138,23 @@ For every important Dart file, collect:
 - mixins
 - extensions
 - enums
-- top-level functions
-- state variables
-- functions
-- function signatures
-- start_line
-- end_line
-- called_functions
-- callers
-- reads_state
-- writes_state
-- api_calls
-- navigation_actions
-- storage_actions
-- method_channel_calls
-- side_effects
+- top-level symbols
+- main_symbols
+- related_features
 - related_files
 - keywords
 - risks
 - TODO/FIXME notes
 
----
+Use `main_symbols` to reference symbols stored in:
 
-# FUNCTION-LEVEL INDEX REQUIREMENT
-
-For every function/method, always include:
-
-```json
-{
-  "name": "",
-  "signature": "",
-  "start_line": 0,
-  "end_line": 0,
-  "visibility": "public/private",
-  "is_async": false,
-  "parameters": [],
-  "return_type": "",
-  "purpose": "",
-  "called_functions": [],
-  "callers": [],
-  "reads_state": [],
-  "writes_state": [],
-  "api_calls": [],
-  "navigation_actions": [],
-  "storage_actions": [],
-  "method_channel_calls": [],
-  "side_effects": [],
-  "related_files": [],
-  "keywords": [],
-  "risks": []
-}
-```
-
-The index must be detailed enough to answer most architecture/debug questions without opening the full source file.
+- `.ai/indexes/symbols/flutter_symbols.json`
 
 ---
 
 # FLUTTER-SPECIFIC DETECTION
 
-Detect and index:
+Detect and index at macro level:
 
 - StatelessWidget
 - StatefulWidget
@@ -166,6 +184,10 @@ Detect and index:
 - EventChannel
 - platform channel constants
 
+Detailed symbol information for these items must be stored in:
+
+- `.ai/indexes/symbols/flutter_symbols.json`
+
 ---
 
 # FLOW MAPPING
@@ -185,7 +207,9 @@ Detect and map Flutter flows:
 - navigation flow
 - MethodChannel bridge flow
 
-Represent flow steps like:
+Represent flow steps as lightweight references to symbols.
+
+Example:
 
 ```json
 {
@@ -193,14 +217,16 @@ Represent flow steps like:
   "steps": [
     {
       "file": "lib/presentation/view/screen/preview/preview_controller.dart",
-      "class": "PreviewController",
-      "function": "startGeneration",
-      "line": 80,
+      "symbol": "PreviewController.startGeneration",
       "action": "Starts image generation and navigates to result screen"
     }
   ]
 }
 ```
+
+Line ranges and caller/callee details must be stored in:
+
+- `.ai/indexes/symbols/flutter_symbols.json`
 
 ---
 
@@ -221,6 +247,7 @@ Represent flow steps like:
   "routes": [],
   "method_channels": [],
   "flows": [],
+  "features": [],
   "files": [
     {
       "path": "",
@@ -228,8 +255,14 @@ Represent flow steps like:
       "layer": "",
       "purpose": "",
       "imports": [],
+      "exports": [],
       "classes": [],
-      "top_level_functions": [],
+      "mixins": [],
+      "extensions": [],
+      "enums": [],
+      "top_level_symbols": [],
+      "main_symbols": [],
+      "related_features": [],
       "related_files": [],
       "keywords": [],
       "risks": []
@@ -242,9 +275,15 @@ Represent flow steps like:
 }
 ```
 
+`main_symbols` should reference symbols stored in:
+
+- `.ai/indexes/symbols/flutter_symbols.json`
+
+Do not store detailed function bodies, caller/callee graphs, line ranges, or side effects inside `codeindex_flutter.json`.
+
 ---
 
-# EXAMPLE FILE INDEX
+# EXAMPLE CODE INDEX FILE ENTRY
 
 ```json
 {
@@ -256,78 +295,270 @@ Represent flow steps like:
     "package:get/get.dart"
   ],
   "classes": [
-    {
-      "name": "PreviewController",
-      "type": "class",
-      "extends": "AppBaseController",
-      "mixins": [],
-      "implements": [],
-      "start_line": 10,
-      "end_line": 160,
-      "state_variables": [
-        {
-          "name": "isGenerating",
-          "type": "RxBool",
-          "line": 18,
-          "purpose": "Tracks generation loading state"
-        }
-      ],
-      "functions": [
-        {
-          "name": "startGeneration",
-          "signature": "Future<void> startGeneration()",
-          "start_line": 70,
-          "end_line": 112,
-          "visibility": "public",
-          "is_async": true,
-          "parameters": [],
-          "return_type": "Future<void>",
-          "purpose": "Starts face swap generation then navigates to result screen.",
-          "called_functions": [
-            "apiRepository.generateImage",
-            "Get.toNamed"
-          ],
-          "callers": [
-            "PreviewScreen.generateButton.onTap"
-          ],
-          "reads_state": [
-            "selectedImage",
-            "selectedFace"
-          ],
-          "writes_state": [
-            "isGenerating"
-          ],
-          "api_calls": [
-            "POST /generate"
-          ],
-          "navigation_actions": [
-            "Routes.result"
-          ],
-          "method_channel_calls": [],
-          "side_effects": [
-            "Shows loading state",
-            "Navigates to result screen"
-          ],
-          "related_files": [
-            "lib/presentation/view/screen/preview/preview_screen.dart",
-            "lib/data/remote/repositories/api_repository.dart"
-          ],
-          "keywords": [
-            "preview",
-            "generation",
-            "face swap",
-            "result"
-          ],
-          "risks": []
-        }
-      ]
-    }
+    "PreviewController"
   ],
-  "related_files": [],
-  "keywords": ["preview", "generation", "controller"],
+  "main_symbols": [
+    "PreviewController.startGeneration",
+    "PreviewController.pickImage",
+    "PreviewController.selectedImage",
+    "PreviewController.isGenerating"
+  ],
+  "related_features": [
+    "preview",
+    "image_generation"
+  ],
+  "related_files": [
+    "lib/presentation/view/screen/preview/preview_screen.dart",
+    "lib/data/remote/repositories/api_repository.dart"
+  ],
+  "keywords": [
+    "preview",
+    "generation",
+    "face swap",
+    "controller"
+  ],
+  "risks": [
+    "Generation flow depends on selected image and selected face state."
+  ]
+}
+```
+
+---
+
+# REQUIRED SYMBOL OUTPUT
+
+Whenever generating or updating Flutter indexes:
+
+ALWAYS maintain:
+
+- `.ai/indexes/symbols/flutter_symbols.json`
+
+Symbol indexes are mandatory.
+
+Indexes and symbol files are part of the source of truth.
+
+Never leave them outdated after code modifications.
+
+---
+
+# REQUIRED FLUTTER SYMBOL INDEXING
+
+For every important Dart entity, generate/update symbols:
+
+- widgets
+- screens
+- controllers
+- bindings
+- services
+- repositories
+- managers
+- models
+- methods/functions
+- constructors
+- routes
+- Rx variables
+- API methods
+- MethodChannel calls
+- callbacks
+- constants
+- enums
+
+---
+
+# REQUIRED FLUTTER SYMBOL STRUCTURE
+
+`.ai/indexes/symbols/flutter_symbols.json` must follow this structure:
+
+```json
+{
+  "project_name": "",
+  "platform": "flutter",
+  "language": "dart",
+  "symbols": [
+    {
+      "name": "",
+      "qualified_name": "",
+      "type": "",
+      "file": "",
+      "owner": "",
+      "signature": "",
+      "start_line": 0,
+      "end_line": 0,
+      "visibility": "",
+      "is_async": false,
+      "parameters": [],
+      "return_type": "",
+      "calls": [],
+      "called_by": [],
+      "reads_state": [],
+      "writes_state": [],
+      "navigation_actions": [],
+      "api_calls": [],
+      "storage_actions": [],
+      "method_channel_calls": [],
+      "side_effects": [],
+      "related_symbols": [],
+      "related_files": [],
+      "tags": [],
+      "risks": []
+    }
+  ]
+}
+```
+
+---
+
+# EXAMPLE SYMBOL ENTRY
+
+```json
+{
+  "name": "startGeneration",
+  "qualified_name": "PreviewController.startGeneration",
+  "type": "method",
+  "platform": "flutter",
+  "language": "dart",
+  "file": "lib/presentation/view/screen/preview/preview_controller.dart",
+  "owner": "PreviewController",
+  "signature": "Future<void> startGeneration()",
+  "start_line": 70,
+  "end_line": 112,
+  "visibility": "public",
+  "is_async": true,
+  "parameters": [],
+  "return_type": "Future<void>",
+  "calls": [
+    "ApiRepository.generateImage",
+    "Get.toNamed"
+  ],
+  "called_by": [
+    "PreviewScreen.generateButton.onTap"
+  ],
+  "reads_state": [
+    "PreviewController.selectedImage",
+    "PreviewController.selectedFace"
+  ],
+  "writes_state": [
+    "PreviewController.isGenerating"
+  ],
+  "navigation_actions": [
+    "Routes.result"
+  ],
+  "api_calls": [
+    "POST /generate"
+  ],
+  "storage_actions": [],
+  "method_channel_calls": [],
+  "side_effects": [
+    "Shows loading state",
+    "Navigates to result screen"
+  ],
+  "related_symbols": [
+    "PreviewScreen.buildContent",
+    "ApiRepository.generateImage"
+  ],
+  "related_files": [
+    "lib/presentation/view/screen/preview/preview_screen.dart",
+    "lib/data/remote/repositories/api_repository.dart"
+  ],
+  "tags": [
+    "preview",
+    "generation",
+    "face_swap",
+    "navigation"
+  ],
   "risks": []
 }
 ```
+
+---
+
+# AUTOMATIC FLUTTER SYMBOL MAINTENANCE
+
+Whenever:
+
+- creating code
+- editing code
+- refactoring
+- renaming functions/classes/routes
+- adding APIs
+- changing navigation
+- adding MethodChannel calls
+- changing state variables
+- changing controller lifecycle logic
+
+ALWAYS update:
+
+- `.ai/indexes/symbols/flutter_symbols.json`
+- caller/callee relationships
+- related flows
+- related feature indexes
+- `codeindex_flutter.json` references if affected
+
+Never leave symbol indexes outdated.
+
+Do NOT regenerate full symbol indexes unless necessary.
+
+Prefer incremental updates for changed symbols only.
+
+---
+
+# SYMBOL QUERY RULES
+
+Before opening full source files:
+
+1. Search `.ai/indexes/symbols/flutter_symbols.json` first.
+
+2. Search by:
+   - exact symbol name
+   - qualified name
+   - class name
+   - owner
+   - tags
+   - callers/callees
+   - routes
+   - API methods
+   - MethodChannel names
+   - feature keywords
+
+3. Only open source files if:
+   - implementation details are required
+   - the symbol index lacks information
+   - architecture tracing fails
+   - code editing is required
+   - the symbol index seems outdated
+
+Prefer symbol-level retrieval over full file scanning.
+
+---
+
+# CROSS-LANGUAGE BRIDGE TRACKING
+
+Track Flutter ↔ Android native bridges:
+
+```text
+Flutter widget/controller
+→ MethodChannel.invokeMethod(...)
+→ Android MethodChannel handler
+→ Native manager/service
+→ callback/result
+→ Flutter state update
+```
+
+Maintain symbol links between:
+
+- Flutter methods
+- MethodChannel calls
+- Kotlin handlers
+- Native callbacks
+- Ads callbacks
+- Billing callbacks
+
+Cross-language bridge details should be stored in both:
+
+- `.ai/indexes/symbols/flutter_symbols.json`
+- `.ai/indexes/symbols/android_symbols.json`
+
+when both sides exist.
 
 ---
 
@@ -335,21 +566,59 @@ Represent flow steps like:
 
 Before answering Flutter/Dart questions:
 
-1. Read `codeindex_flutter.json` first.
-2. Search by function name, class name, route name, keyword, or flow name.
-3. Use line ranges from the index.
-4. Only open full source files if:
+1. Read `codeindex_flutter.json` for architecture, feature, and flow context.
+2. Read `.ai/indexes/symbols/flutter_symbols.json` for exact function/class/route lookup.
+3. Search by:
+   - feature name
+   - flow name
+   - class name
+   - function name
+   - route name
+   - symbol name
+   - keyword
+4. Use line ranges from `.ai/indexes/symbols/flutter_symbols.json`.
+5. Only open full source files if:
    - the function body is needed
    - the index is missing details
    - code editing is required
    - the index seems outdated
 
-Avoid reading entire files when function-level index already answers the question.
+Avoid reading entire files when symbol-level index already answers the question.
 
 ---
 
 # RESPONSE STYLE
 
 Be concise, technical, and traceable.
-Always mention file path and function name when relevant.
-Prefer flow chains and function relationships over generic summaries.
+
+Always mention:
+- file path
+- symbol name
+- function/method name when relevant
+- related flow when relevant
+
+Prefer:
+- flow chains
+- function relationships
+- symbol references
+- file relationships
+
+Avoid:
+- generic summaries
+- duplicating data from source files
+- reading full files when symbols are enough
+
+---
+
+# OPTIMIZATION PRIORITIES
+
+Always prioritize:
+
+- architecture-level code index
+- symbol-level retrieval
+- function-level tracing through symbols
+- caller/callee relationships
+- low token usage
+- incremental symbol updates
+- cross-language tracing
+- semantic searchability
