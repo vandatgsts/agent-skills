@@ -16,7 +16,7 @@ Whenever initializing a new workspace or starting a new session in a project:
    - Mixed Flutter + Native Android
 
 2. Activate the appropriate indexing skills:
-   - `flutter-function-level-indexing`
+   - `flutter-code-indexing`
    - `android-kotlin-native-indexing`
    - `symbol-indexing`
 
@@ -42,8 +42,12 @@ Before generating any new code, components, or modules:
 
 Maintain:
 - `CODE_INDEX_FLUTTER.md`
-- `codeindex_flutter.json`
-- `.ai/indexes/symbols/flutter_symbols.json`
+- `codeindex_flutter.json` (entry index or v2 manifest)
+- `.ai/indexes/symbols/flutter_symbols.json` (entry symbol index or v2 manifest)
+
+When Flutter index files use a v2 manifest schema, also maintain the declared shards in:
+- `.ai/indexes/flutter/*.json`
+- `.ai/indexes/symbols/flutter/*.json`
 
 ---
 
@@ -51,8 +55,12 @@ Maintain:
 
 Maintain:
 - `CODE_INDEX_ANDROID.md`
-- `codeindex_android.json`
-- `.ai/indexes/symbols/android_symbols.json`
+- `codeindex_android.json` (entry index or v2 manifest)
+- `.ai/indexes/symbols/android_symbols.json` (entry symbol index or v2 manifest)
+
+When Android index files use a v2 manifest schema, also maintain the declared shards in:
+- `.ai/indexes/android/*.json`
+- `.ai/indexes/symbols/android/*.json`
 
 ---
 
@@ -85,6 +93,8 @@ ALWAYS update simultaneously:
 - related feature indexes
 - bug memory (if applicable)
 
+For v2 manifests, update affected shard content and preserve root manifests. After additions, moves, renames, or package refactors, run the platform sharding script with `--rebalance`, then `--validate`. Validation checks shard integrity only; compare indexed paths with the source tree after structural changes.
+
 Never leave indexes or symbols outdated after completing a task or generating new code.
 Prefer incremental updates over full regeneration.
 Update only affected files/symbols when possible.
@@ -96,7 +106,7 @@ Update only affected files/symbols when possible.
 When working with Flutter/Dart code:
 
 Use:
-- `flutter-function-level-indexing`
+- `flutter-code-indexing`
 
 Maintain:
 - `CODE_INDEX_FLUTTER.md`
@@ -177,9 +187,11 @@ Maintain:
 
 Flutter:
 - `.ai/indexes/symbols/flutter_symbols.json`
+- declared `.ai/indexes/symbols/flutter/*.json` shards when using v2 manifests
 
 Android Native:
 - `.ai/indexes/symbols/android_symbols.json`
+- declared `.ai/indexes/symbols/android/*.json` shards when using v2 manifests
 
 ---
 
@@ -380,6 +392,7 @@ Read:
 - `CODE_INDEX_FLUTTER.md`
 - `codeindex_flutter.json`
 - `.ai/indexes/symbols/flutter_symbols.json`
+- declared Flutter architecture and symbol shards when the root files are v2 manifests
 
 ---
 
@@ -389,6 +402,7 @@ Read:
 - `CODE_INDEX_ANDROID.md`
 - `codeindex_android.json`
 - `.ai/indexes/symbols/android_symbols.json`
+- declared Android architecture and symbol shards when the root files are v2 manifests
 
 ---
 
