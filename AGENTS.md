@@ -311,7 +311,8 @@ Before fixing any bug:
 
 2. Read:
    - `BUG_INDEX.md`
-   - `bugindex.json`
+   - `bugindex.json` manifest
+   - only matching `.ai/bugs/<feature>/BUG-<id>.json` shards
 
 3. Search for:
    - similar symptoms
@@ -335,8 +336,8 @@ Avoid repeating failed debugging attempts.
 If the bug is new:
 
 1. Create a new record in:
-   - `BUG_INDEX.md`
-   - `bugindex.json`
+   - `.ai/bugs/<feature>/BUG-<id>.json` for complete details
+   - `BUG_INDEX.md` and `bugindex.json` for the lightweight index entry
 
 2. Set status:
    - `OPEN`
@@ -411,6 +412,7 @@ Read:
 Read:
 - `BUG_INDEX.md`
 - `bugindex.json`
+- matching bug shard files declared by the manifest
 
 ---
 

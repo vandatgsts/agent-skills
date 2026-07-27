@@ -1,47 +1,38 @@
 ---
 name: bug-memory-tracking
-description: Records and retrieves durable project bug history: symptoms, evidence, root causes, fixes, verification, and regressions. Use when diagnosing a bug or crash, investigating a recurring issue, implementing a fix, reviewing a regression, or preserving debugging knowledge across sessions.
+description: Records and retrieves durable project bug history using a root manifest and per-bug shards. Use when diagnosing a bug or crash, investigating a recurring issue, implementing a fix, reviewing a regression, or preserving debugging knowledge across sessions.
 ---
 
 # Bug Memory Tracking
 
-Maintain project-specific debugging knowledge so agents do not repeat failed investigations or fixes.
+Maintain project-specific debugging knowledge without growing one large bug file.
 
-## Persistent Files
+## Storage Layout
 
-Maintain these files at the project root:
+Use this layout once a project has bug memory:
 
-- `BUG_INDEX.md`: concise, human-readable history.
-- `bugindex.json`: machine-readable records for lookup.
+```text
+BUG_INDEX.md                         # short human-readable index
+bugindex.json                        # bug-index-manifest-v2
+.ai/bugs/<feature>/BUG-0001.json     # complete record for one bug
+```
 
-Create them only when the project needs its first bug record. Keep both files synchronized. Prefer incremental changes; do not rewrite unrelated records.
+- `BUG_INDEX.md` lists ID, status, feature, title, and shard path only.
+- `bugindex.json` is the machine-readable manifest and contains the same lightweight lookup fields plus `shard`.
+- Each shard contains the complete evidence, root cause, fix, verification, and notes for exactly one bug.
+
+Use a lowercase kebab-case feature folder. Use `general` when the bug has no feature owner. Do not put full bug details back into the root manifest.
+
+Create the root files and first shard only when the project has its first reproducible bug. When migrating an existing flat `bugindex.json`, preserve IDs, create one shard per record, reduce the root to the manifest, and update `BUG_INDEX.md` in the same change.
 
 ## Before Debugging
 
-1. Read `bugindex.json` and search by symptom, error text, feature, file, symbol, and related bug ID.
-2. Read matching entries in `BUG_INDEX.md`.
-3. Read the relevant code and symbol indexes before opening broad source areas.
-4. Reuse a verified cause or fix only when the current evidence matches.
+1. Search `bugindex.json` by symptom, error text, feature, file, symbol, and related bug ID.
+2. Open only the matching `.ai/bugs/<feature>/BUG-<id>.json` shards.
+3. Read matching `BUG_INDEX.md` entries and relevant code/symbol indexes.
+4. Reuse a verified cause or fix only when current evidence matches.
 
-Do not create a bug record for expected behavior, an unconfirmed idea, or a transient build-environment failure unless it affects the project reproducibly.
-
-## Record Schema
-
-Each bug must contain:
-
-- `id`: stable sequential ID such as `BUG-0001`.
-- `title`: short observable problem statement.
-- `status`: one allowed status.
-- `feature`: owning feature or module.
-- `severity`: low, medium, high, or critical.
-- `affected_files` and `affected_symbols`.
-- `symptoms`, `logs`, and reproducible steps.
-- `root_cause`: confirmed cause; leave empty while investigating.
-- `fix`: implemented solution; leave empty before a fix.
-- `verification_steps` and verification result.
-- `regression_risk`, `related_bugs`, and dated notes.
-
-Never place secrets, full access tokens, personal data, or raw production payloads in bug memory.
+Do not record expected behavior, an unconfirmed idea, or a transient environment failure unless it affects the project reproducibly.
 
 ## Allowed Statuses
 
@@ -52,52 +43,46 @@ Never place secrets, full access tokens, personal data, or raw production payloa
 - `WONT_FIX`: consciously accepted; include rationale.
 - `REGRESSION`: a previously resolved issue has returned.
 
-Use status transitions that reflect evidence. Do not mark a bug `FIXED` or `VERIFIED` merely because code was changed.
+Do not mark a bug `FIXED` or `VERIFIED` merely because code was changed.
+
+## Bug Shard Schema
+
+Every bug shard must contain:
+
+- `id`, `title`, `status`, `feature`, and `severity`.
+- `affected_files` and `affected_symbols`.
+- `symptoms`, `logs`, and `reproduction_steps`.
+- `root_cause`: confirmed cause only; leave empty while investigating.
+- `fix`, `fixed_files`, and `verification_steps`.
+- `verification_result`, `regression_risk`, `related_bugs`, and dated `notes`.
+
+Never store secrets, full access tokens, personal data, or raw production payloads.
 
 ## Workflow
 
 ### Report
 
-Create an `OPEN` record with the report, scope, evidence, and reproduction steps. Link suspected duplicates instead of creating duplicate records.
+Create a new `OPEN` shard and add its lightweight entry to both root indexes. Link suspected duplicates instead of creating duplicate records.
 
 ### Investigate
 
-Change status to `INVESTIGATING`. Add observed behavior, narrowed scope, relevant files/symbols, failed hypotheses, and evidence. Keep unconfirmed theories in notes, not in `root_cause`.
+Update only that shard with observed behavior, narrowed scope, relevant files/symbols, failed hypotheses, and evidence. Keep unconfirmed theories in notes, not in `root_cause`. Update the manifest status.
 
-### Fix
+### Fix and Verify
 
-Record the confirmed root cause, exact fix, changed files/symbols, and regression risk. Change status to `FIXED` only after the change is implemented.
+Record the confirmed cause, exact fix, changed symbols, and actual verification in the shard. Update the summary fields in `bugindex.json` and `BUG_INDEX.md`. Set `VERIFIED` only after the defined checks pass.
 
-### Verify
+### Regression
 
-Record commands, tests, device scenarios, or manual steps actually performed and their result. Change to `VERIFIED` only after they pass. If the issue returns, set `REGRESSION` and link the earlier record.
+Set the returning bug to `REGRESSION` or create a linked new shard when the cause differs. Keep both records and link IDs in `related_bugs`.
 
-## Markdown Format
+## Root Manifest Format
 
-Use one concise section per bug:
-
-```markdown
-## BUG-0001 — Editor drag resets after rotation
-
-- Status: VERIFIED
-- Feature: editor
-- Severity: high
-- Affected: `EditorViewModel.onEvent`, `RoomCanvas`
-- Symptoms: Dragged item returns to its pre-rotation position.
-- Reproduce: Rotate an item, drag it, save, reopen the room.
-- Root cause: Move command used stale rotation coordinates.
-- Fix: Build the move command from the latest scene state.
-- Verification: `:app:compileDebugKotlin`; manual rotate/drag/save/reopen scenario passed.
-- Regression risk: Coordinate transforms and undo/redo.
-- Related: BUG-0007
-```
-
-## JSON Format
-
-Keep `bugindex.json` valid JSON with a top-level `bugs` array:
+Keep `bugindex.json` valid JSON:
 
 ```json
 {
+  "schema": "bug-index-manifest-v2",
   "bugs": [
     {
       "id": "BUG-0001",
@@ -105,27 +90,52 @@ Keep `bugindex.json` valid JSON with a top-level `bugs` array:
       "status": "VERIFIED",
       "feature": "editor",
       "severity": "high",
-      "affected_files": ["app/src/main/java/.../EditorViewModel.kt"],
       "affected_symbols": ["EditorViewModel.onEvent"],
-      "symptoms": ["Dragged item returns to its pre-rotation position."],
-      "logs": [],
-      "reproduction_steps": ["Rotate an item", "Drag it", "Save and reopen the room"],
-      "root_cause": "Move command used stale rotation coordinates.",
-      "fix": "Build the move command from the latest scene state.",
-      "fixed_files": ["app/src/main/java/.../EditorViewModel.kt"],
-      "verification_steps": [":app:compileDebugKotlin", "Manual rotate/drag/save/reopen scenario"],
-      "verification_result": "passed",
-      "regression_risk": "Coordinate transforms and undo/redo.",
-      "related_bugs": ["BUG-0007"],
-      "notes": []
+      "shard": ".ai/bugs/editor/BUG-0001.json"
     }
   ]
 }
 ```
 
+## Bug Shard Format
+
+```json
+{
+  "id": "BUG-0001",
+  "title": "Editor drag resets after rotation",
+  "status": "VERIFIED",
+  "feature": "editor",
+  "severity": "high",
+  "affected_files": ["app/src/main/java/.../EditorViewModel.kt"],
+  "affected_symbols": ["EditorViewModel.onEvent"],
+  "symptoms": ["Dragged item returns to its pre-rotation position."],
+  "logs": [],
+  "reproduction_steps": ["Rotate an item", "Drag it", "Save and reopen the room"],
+  "root_cause": "Move command used stale rotation coordinates.",
+  "fix": "Build the move command from the latest scene state.",
+  "fixed_files": ["app/src/main/java/.../EditorViewModel.kt"],
+  "verification_steps": [":app:compileDebugKotlin", "Manual rotate/drag/save/reopen scenario"],
+  "verification_result": "passed",
+  "regression_risk": "Coordinate transforms and undo/redo.",
+  "related_bugs": ["BUG-0007"],
+  "notes": []
+}
+```
+
+## `BUG_INDEX.md` Format
+
+Keep one short line per bug, grouped by status or feature:
+
+```markdown
+| ID | Status | Feature | Title | Record |
+| --- | --- | --- | --- | --- |
+| BUG-0001 | VERIFIED | editor | Editor drag resets after rotation | `.ai/bugs/editor/BUG-0001.json` |
+```
+
 ## Maintenance Rules
 
-- Update bug memory whenever a bug is reported, investigated, fixed, verified, reopened, or intentionally declined.
+- Update the affected shard and both root indexes whenever a bug changes state.
+- Keep manifest `shard` paths valid after file or feature moves.
 - Update linked code/symbol indexes when a fix changes symbols, flows, routes, or package paths.
-- Search existing records before adding one; preserve IDs and history.
-- Mention the bug ID, affected path, and symbol when reporting debugging results.
+- Search the manifest before adding a bug; preserve IDs and history.
+- Mention bug ID, shard path, affected path, and symbol in debugging results.
