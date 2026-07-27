@@ -19,6 +19,7 @@ Whenever initializing a new workspace or starting a new session in a project:
    - `flutter-code-indexing`
    - `android-kotlin-native-indexing`
    - `symbol-indexing`
+   - `runtime-ui-inspection` when a running app surface is available for UI validation
 
 3. Generate or verify all required indexes and symbol maps simultaneously.
 
@@ -297,6 +298,20 @@ Maintain symbol links between:
 - MethodChannel calls
 - Kotlin handlers
 - Native callbacks
+
+---
+
+# Runtime UI Inspection Rules
+
+When a user reports a visual, layout, state-rendering, navigation, tap-target, loading, empty, error, or accessibility issue in a running app:
+
+1. Activate `runtime-ui-inspection`.
+2. Capture a fresh screenshot before changing source code.
+3. Save temporary evidence under `.ai/ui-inspections/<timestamp>/`.
+4. Inspect the rendered UI, then trace the affected route, state, and UI symbol through indexes.
+5. Re-capture the same scenario after a fix; do not treat a successful build as visual verification.
+
+Never capture or retain unrelated windows, secrets, personal data, or notifications.
 
 ---
 
