@@ -20,6 +20,8 @@ Whenever initializing a new workspace or starting a new session in a project:
    - `android-kotlin-native-indexing`
    - `symbol-indexing`
    - `runtime-ui-inspection` when a running app surface is available for UI validation
+   - `android-compose-ui` when changing Jetpack Compose presentation
+   - `android-testing` when validating behavior or a bug fix
 
 3. Generate or verify all required indexes and symbol maps simultaneously.
 
@@ -323,6 +325,7 @@ Before fixing any bug:
 
 1. ALWAYS activate:
    - `bug-memory-tracking`
+   - `debugging-and-error-recovery`
    - `runtime-ui-inspection` when the report concerns rendered UI or interaction behavior
 
 2. Read:
@@ -465,6 +468,12 @@ Only open full source files if:
 - code modifications/generations are required
 
 Otherwise rely on semantic indexes and symbol tables first.
+
+---
+
+# Review Rules
+
+Before committing, merging, or releasing a non-trivial change, activate `code-review-and-quality`. Verify the relevant diff, build/test result, and runtime evidence before marking the work complete.
 
 ---
 
