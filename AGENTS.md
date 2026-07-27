@@ -22,6 +22,7 @@ Whenever initializing a new workspace or starting a new session in a project:
    - `runtime-ui-inspection` when a running app surface is available for UI validation
    - `android-compose-ui` when changing Jetpack Compose presentation
    - `android-testing` when validating behavior or a bug fix
+   - `flutter-testing` when validating Flutter behavior or a Flutter bug fix
 
 3. Generate or verify all required indexes and symbol maps simultaneously.
 
