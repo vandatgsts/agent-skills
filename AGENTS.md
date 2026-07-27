@@ -23,6 +23,7 @@ Whenever initializing a new workspace or starting a new session in a project:
    - `android-compose-ui` when changing Jetpack Compose presentation
    - `android-testing` when validating behavior or a bug fix
    - `flutter-testing` when validating Flutter behavior or a Flutter bug fix
+   - `mobile-ads-orchestration` when changing or debugging ads, rewards, premium ad removal, or ad loading UI
 
 3. Generate or verify all required indexes and symbol maps simultaneously.
 
@@ -315,6 +316,14 @@ When a user reports a visual, layout, state-rendering, navigation, tap-target, l
 5. Re-capture the same scenario after a fix; do not treat a successful build as visual verification.
 
 Never capture or retain unrelated windows, secrets, personal data, or notifications.
+
+---
+
+# Mobile Ads Rules
+
+When a non-native ad is loading for display, show a single app-level loading overlay over the app and block duplicate interaction. Dismiss it only when the ad is handed to the SDK for display, attached to its banner placement, fails, times out, or is cancelled.
+
+Native ads must not use the global loading overlay. Keep their layout stable with a local placeholder or skeleton at the native placement.
 
 ---
 
