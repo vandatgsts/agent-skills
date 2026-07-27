@@ -31,6 +31,15 @@ Always maintain:
 
 For mixed Flutter + native Android projects, maintain both.
 
+## Manifest And Shard Awareness
+
+When a root symbol file has a v2 manifest schema, it is an entry point only. Keep detailed symbols in the shard files declared by that manifest; do not replace the manifest with a flat `symbols` array.
+
+- Android: `.ai/indexes/symbols/android_symbols.json` + `.ai/indexes/symbols/android/*.json`
+- Flutter: `.ai/indexes/symbols/flutter_symbols.json` + `.ai/indexes/symbols/flutter/*.json`
+
+After a rename, move, package change, route change, or structural refactor, update affected symbols and caller/callee links. Then run the platform sharding script with `--rebalance` followed by `--validate`. Validation confirms shard integrity, so also compare symbol `file` paths against the source tree.
+
 ---
 
 # What Counts As A Symbol

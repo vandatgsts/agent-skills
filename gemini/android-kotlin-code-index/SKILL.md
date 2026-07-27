@@ -16,10 +16,25 @@ The goal is to make Kotlin/Java Android code easy to query without rereading ent
 
 # OUTPUT FILES
 
-Always maintain these files at project root:
+Maintain these project-root entry files:
 
 - CODE_INDEX_ANDROID.md
 - codeindex_android.json
+
+When `codeindex_android.json` uses `schema: "android-index-manifest-v2"`, treat it as a manifest, not a complete monolithic index. Maintain the shard pairs it declares:
+
+- `.ai/indexes/android/<shard>.json` for architecture/file data
+- `.ai/indexes/symbols/android/<shard>.json` for detailed symbols
+- `.ai/indexes/symbols/android_symbols.json` as the symbol manifest
+
+Never flatten or replace a v2 manifest with a legacy single-file index. After Kotlin/Java additions, moves, renames, or package refactors, update the affected shard content, then run:
+
+```powershell
+python <skill-dir>/scripts/shard_android_indexes.py <project-root> --rebalance
+python <skill-dir>/scripts/shard_android_indexes.py <project-root> --validate
+```
+
+`--validate` checks manifest/shard integrity; it does not prove that paths match source. Compare indexed paths with the source tree after structural refactors.
 
 Do not generate shallow indexes.
 Do not only list file paths.

@@ -34,11 +34,26 @@ The goal is to make Flutter code easy to query without rereading entire source f
 
 # OUTPUT FILES
 
-Always maintain these files:
+Maintain these entry files:
 
 - `CODE_INDEX_FLUTTER.md`
 - `codeindex_flutter.json`
 - `.ai/indexes/symbols/flutter_symbols.json`
+
+When `codeindex_flutter.json` uses `schema: "flutter-index-manifest-v2"`, treat it as a manifest. Keep its declared shards as the source of truth:
+
+- `.ai/indexes/flutter/<shard>.json` for architecture/file data
+- `.ai/indexes/symbols/flutter/<shard>.json` for detailed symbols
+- `.ai/indexes/symbols/flutter_symbols.json` as the symbol manifest
+
+Never overwrite a v2 manifest with a legacy monolithic index. After Dart additions, moves, renames, route changes, or refactors, update affected shard content, then run:
+
+```powershell
+python <skill-dir>/scripts/shard_flutter_indexes.py <project-root> --rebalance
+python <skill-dir>/scripts/shard_flutter_indexes.py <project-root> --validate
+```
+
+`--validate` checks manifest/shard integrity only. Compare indexed paths with the source tree after structural refactors.
 
 Do not generate shallow indexes.
 
