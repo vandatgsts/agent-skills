@@ -12,24 +12,24 @@ Maintain project-specific debugging knowledge without growing one large bug file
 Use this layout once a project has bug memory:
 
 ```text
-BUG_INDEX.md                         # short human-readable index
+.ai/bugs/BUG_INDEX.md                # short human-readable index
 bugindex.json                        # bug-index-manifest-v2
 .ai/bugs/<feature>/BUG-0001.json     # complete record for one bug
 ```
 
-- `BUG_INDEX.md` lists ID, status, feature, title, and shard path only.
+- `.ai/bugs/BUG_INDEX.md` lists ID, status, feature, title, and shard path only.
 - `bugindex.json` is the machine-readable manifest and contains the same lightweight lookup fields plus `shard`.
 - Each shard contains the complete evidence, root cause, fix, verification, and notes for exactly one bug.
 
 Use a lowercase kebab-case feature folder. Use `general` when the bug has no feature owner. Do not put full bug details back into the root manifest.
 
-Create the root files and first shard only when the project has its first reproducible bug. When migrating an existing flat `bugindex.json`, preserve IDs, create one shard per record, reduce the root to the manifest, and update `BUG_INDEX.md` in the same change.
+Create the root manifest and first shard only when the project has its first reproducible bug. When migrating an existing flat `bugindex.json`, preserve IDs, create one shard per record, reduce the root to the manifest, and update `.ai/bugs/BUG_INDEX.md` in the same change.
 
 ## Before Debugging
 
 1. Search `bugindex.json` by symptom, error text, feature, file, symbol, and related bug ID.
 2. Open only the matching `.ai/bugs/<feature>/BUG-<id>.json` shards.
-3. Read matching `BUG_INDEX.md` entries and relevant code/symbol indexes.
+3. Read matching `.ai/bugs/BUG_INDEX.md` entries and relevant code/symbol indexes.
 4. Reuse a verified cause or fix only when current evidence matches.
 
 Do not record expected behavior, an unconfirmed idea, or a transient environment failure unless it affects the project reproducibly.
@@ -70,7 +70,7 @@ Update only that shard with observed behavior, narrowed scope, relevant files/sy
 
 ### Fix and Verify
 
-Record the confirmed cause, exact fix, changed symbols, and actual verification in the shard. Update the summary fields in `bugindex.json` and `BUG_INDEX.md`. Set `VERIFIED` only after the defined checks pass.
+Record the confirmed cause, exact fix, changed symbols, and actual verification in the shard. Update the summary fields in `bugindex.json` and `.ai/bugs/BUG_INDEX.md`. Set `VERIFIED` only after the defined checks pass.
 
 ### Regression
 
@@ -122,7 +122,7 @@ Keep `bugindex.json` valid JSON:
 }
 ```
 
-## `BUG_INDEX.md` Format
+## `.ai/bugs/BUG_INDEX.md` Format
 
 Keep one short line per bug, grouped by status or feature:
 
@@ -134,7 +134,7 @@ Keep one short line per bug, grouped by status or feature:
 
 ## Maintenance Rules
 
-- Update the affected shard and both root indexes whenever a bug changes state.
+- Update the affected shard, root manifest, and `.ai/bugs/BUG_INDEX.md` whenever a bug changes state.
 - Keep manifest `shard` paths valid after file or feature moves.
 - Update linked code/symbol indexes when a fix changes symbols, flows, routes, or package paths.
 - Search the manifest before adding a bug; preserve IDs and history.

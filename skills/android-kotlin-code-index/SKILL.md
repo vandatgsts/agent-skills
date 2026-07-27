@@ -16,10 +16,10 @@ The goal is to make Kotlin/Java Android code easy to query without rereading ent
 
 # OUTPUT FILES
 
-Maintain these project-root entry files:
+Maintain these entry files:
 
-- CODE_INDEX_ANDROID.md
-- codeindex_android.json
+- `.ai/indexes/CODE_INDEX_ANDROID.md`
+- `codeindex_android.json` at the project root
 
 When `codeindex_android.json` uses `schema: "android-index-manifest-v2"`, treat it as a manifest, not a complete monolithic index. Maintain the shard pairs it declares:
 
@@ -437,7 +437,7 @@ ALWAYS maintain:
 - `.ai/indexes/symbols/android_symbols.json`
 
 Do not only generate:
-- `CODE_INDEX_ANDROID.md`
+- `.ai/indexes/CODE_INDEX_ANDROID.md`
 - `codeindex_android.json`
 
 Symbol indexes are mandatory.

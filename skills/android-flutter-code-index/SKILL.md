@@ -36,8 +36,8 @@ The goal is to make Flutter code easy to query without rereading entire source f
 
 Maintain these entry files:
 
-- `CODE_INDEX_FLUTTER.md`
-- `codeindex_flutter.json`
+- `.ai/indexes/CODE_INDEX_FLUTTER.md`
+- `codeindex_flutter.json` at the project root
 - `.ai/indexes/symbols/flutter_symbols.json`
 
 When `codeindex_flutter.json` uses `schema: "flutter-index-manifest-v2"`, treat it as a manifest. Keep its declared shards as the source of truth:

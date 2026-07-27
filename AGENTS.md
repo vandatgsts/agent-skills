@@ -41,7 +41,7 @@ Before generating any new code, components, or modules:
 # Required Flutter Index Files
 
 Maintain:
-- `CODE_INDEX_FLUTTER.md`
+- `.ai/indexes/CODE_INDEX_FLUTTER.md`
 - `codeindex_flutter.json` (entry index or v2 manifest)
 - `.ai/indexes/symbols/flutter_symbols.json` (entry symbol index or v2 manifest)
 
@@ -54,7 +54,7 @@ When Flutter index files use a v2 manifest schema, also maintain the declared sh
 # Required Android Native Index Files
 
 Maintain:
-- `CODE_INDEX_ANDROID.md`
+- `.ai/indexes/CODE_INDEX_ANDROID.md`
 - `codeindex_android.json` (entry index or v2 manifest)
 - `.ai/indexes/symbols/android_symbols.json` (entry symbol index or v2 manifest)
 
@@ -88,7 +88,7 @@ For every:
 - MethodChannel change
 
 ALWAYS update simultaneously:
-- code indexes (`CODE_INDEX_*.md` & `*.json`)
+- code indexes (`.ai/indexes/CODE_INDEX_*.md` & `*.json`)
 - symbol indexes (`*_symbols.json`)
 - related feature indexes
 - bug memory (if applicable)
@@ -109,7 +109,7 @@ Use:
 - `flutter-code-indexing`
 
 Maintain:
-- `CODE_INDEX_FLUTTER.md`
+- `.ai/indexes/CODE_INDEX_FLUTTER.md`
 - `codeindex_flutter.json`
 
 Index at function-level including:
@@ -145,7 +145,7 @@ Use:
 - `android-kotlin-native-indexing`
 
 Maintain:
-- `CODE_INDEX_ANDROID.md`
+- `.ai/indexes/CODE_INDEX_ANDROID.md`
 - `codeindex_android.json`
 
 Index at function-level including:
@@ -310,7 +310,7 @@ Before fixing any bug:
    - `bug-memory-tracking`
 
 2. Read:
-   - `BUG_INDEX.md`
+   - `.ai/bugs/BUG_INDEX.md`
    - `bugindex.json` manifest
    - only matching `.ai/bugs/<feature>/BUG-<id>.json` shards
 
@@ -337,7 +337,7 @@ If the bug is new:
 
 1. Create a new record in:
    - `.ai/bugs/<feature>/BUG-<id>.json` for complete details
-   - `BUG_INDEX.md` and `bugindex.json` for the lightweight index entry
+   - `.ai/bugs/BUG_INDEX.md` and `bugindex.json` for the lightweight index entry
 
 2. Set status:
    - `OPEN`
@@ -390,7 +390,7 @@ Read all relevant indexes and symbol maps first.
 # Flutter Retrieval Sources
 
 Read:
-- `CODE_INDEX_FLUTTER.md`
+- `.ai/indexes/CODE_INDEX_FLUTTER.md`
 - `codeindex_flutter.json`
 - `.ai/indexes/symbols/flutter_symbols.json`
 - declared Flutter architecture and symbol shards when the root files are v2 manifests
@@ -400,7 +400,7 @@ Read:
 # Android Retrieval Sources
 
 Read:
-- `CODE_INDEX_ANDROID.md`
+- `.ai/indexes/CODE_INDEX_ANDROID.md`
 - `codeindex_android.json`
 - `.ai/indexes/symbols/android_symbols.json`
 - declared Android architecture and symbol shards when the root files are v2 manifests
@@ -410,7 +410,7 @@ Read:
 # Bug Retrieval Sources
 
 Read:
-- `BUG_INDEX.md`
+- `.ai/bugs/BUG_INDEX.md`
 - `bugindex.json`
 - matching bug shard files declared by the manifest
 
