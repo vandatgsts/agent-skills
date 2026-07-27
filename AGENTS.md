@@ -321,9 +321,9 @@ Never capture or retain unrelated windows, secrets, personal data, or notificati
 
 # Mobile Ads Rules
 
-When a non-native ad is loading for display, show a single app-level loading overlay over the app and block duplicate interaction. Dismiss it only when the ad is handed to the SDK for display, attached to its banner placement, fails, times out, or is cancelled.
+When a full-screen ad (interstitial, rewarded, or app-open) is loading for display, show a single app-level loading overlay over the app and block duplicate interaction. Dismiss it only when the ad is handed to the SDK for display, fails, times out, or is cancelled.
 
-Native ads must not use the global loading overlay. Keep their layout stable with a local placeholder or skeleton at the native placement.
+Banner and native ads must not use the global loading overlay. Keep their layouts stable with local placeholders or skeletons at their placements.
 
 ---
 
