@@ -24,6 +24,7 @@ Whenever initializing a new workspace or starting a new session in a project:
    - `android-testing` when validating behavior or a bug fix
    - `flutter-testing` when validating Flutter behavior or a Flutter bug fix
    - `mobile-ads-orchestration` when changing or debugging ads, rewards, premium ad removal, or ad loading UI
+   - `custom-native-ads` when creating or changing a custom native ad placement
 
 3. Generate or verify all required indexes and symbol maps simultaneously.
 
@@ -324,6 +325,8 @@ Never capture or retain unrelated windows, secrets, personal data, or notificati
 When a full-screen ad (interstitial, rewarded, or app-open) is loading for display, show a single app-level loading overlay over the app and block duplicate interaction. Dismiss it only when the ad is handed to the SDK for display, fails, times out, or is cancelled.
 
 Banner and native ads must not use the global loading overlay. Keep their layouts stable with local placeholders or skeletons at their placements.
+
+For custom native ads, bind only SDK-provided assets, preserve attribution/AdChoices and SDK click handling, and destroy the placement view with its owner lifecycle.
 
 ---
 
