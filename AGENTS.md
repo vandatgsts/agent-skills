@@ -308,6 +308,7 @@ Before fixing any bug:
 
 1. ALWAYS activate:
    - `bug-memory-tracking`
+   - `runtime-ui-inspection` when the report concerns rendered UI or interaction behavior
 
 2. Read:
    - `.ai/bugs/BUG_INDEX.md`
