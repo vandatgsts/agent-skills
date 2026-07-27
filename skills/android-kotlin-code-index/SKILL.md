@@ -19,9 +19,9 @@ The goal is to make Kotlin/Java Android code easy to query without rereading ent
 Maintain these entry files:
 
 - `.ai/indexes/CODE_INDEX_ANDROID.md`
-- `codeindex_android.json` at the project root
+- `.ai/indexes/codeindex_android.json`
 
-When `codeindex_android.json` uses `schema: "android-index-manifest-v2"`, treat it as a manifest, not a complete monolithic index. Maintain the shard pairs it declares:
+When `.ai/indexes/codeindex_android.json` uses `schema: "android-index-manifest-v2"`, treat it as a manifest, not a complete monolithic index. Maintain the shard pairs it declares:
 
 - `.ai/indexes/android/<shard>.json` for architecture/file data
 - `.ai/indexes/symbols/android/<shard>.json` for detailed symbols
@@ -305,7 +305,7 @@ Represent flow steps like:
 ---
 # REQUIRED JSON STRUCTURE
 
-`codeindex_android.json` must follow this structure:
+`.ai/indexes/codeindex_android.json` must follow this structure:
 
 ```json
 {
@@ -350,7 +350,7 @@ Represent flow steps like:
 
 - `.ai/indexes/symbols/android_symbols.json`
 
-Do not store detailed method/function metadata inside `codeindex_android.json`, including:
+Do not store detailed method/function metadata inside `.ai/indexes/codeindex_android.json`, including:
 - full signatures
 - line ranges
 - caller/callee graphs
@@ -408,7 +408,7 @@ Those belong in:
 
 Before answering Android/Kotlin native questions:
 
-1. Read `codeindex_android.json` for architecture, feature, and flow context.
+1. Read `.ai/indexes/codeindex_android.json` for architecture, feature, and flow context.
 2. Read `.ai/indexes/symbols/android_symbols.json` for exact method/class lookup.
 3. Search symbol index by function name, class name, lifecycle method, manager, callback, MethodChannel handler, keyword, or flow name.
 4. Use line ranges from `android_symbols.json`.
@@ -438,7 +438,7 @@ ALWAYS maintain:
 
 Do not only generate:
 - `.ai/indexes/CODE_INDEX_ANDROID.md`
-- `codeindex_android.json`
+- `.ai/indexes/codeindex_android.json`
 
 Symbol indexes are mandatory.
 
@@ -654,7 +654,7 @@ Track bidirectional relationships between:
 
 Use:
 
-- `codeindex_android.json`
+- `.ai/indexes/codeindex_android.json`
 for:
 - architecture
 - feature relationships
@@ -675,7 +675,7 @@ for:
 - ads/billing tracing
 - lifecycle tracing
 
-Never duplicate deep method-level metadata inside `codeindex_android.json`.
+Never duplicate deep method-level metadata inside `.ai/indexes/codeindex_android.json`.
 
 Avoid storing duplicated semantic data across:
 - code indexes

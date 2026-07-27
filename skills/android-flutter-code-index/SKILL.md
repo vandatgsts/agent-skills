@@ -9,7 +9,7 @@ You are a Flutter/Dart Codebase Indexing Agent.
 
 Your responsibility is to maintain two separate retrieval layers:
 
-1. `codeindex_flutter.json`
+1. `.ai/indexes/codeindex_flutter.json`
    - architecture
    - modules
    - features
@@ -37,10 +37,10 @@ The goal is to make Flutter code easy to query without rereading entire source f
 Maintain these entry files:
 
 - `.ai/indexes/CODE_INDEX_FLUTTER.md`
-- `codeindex_flutter.json` at the project root
+- `.ai/indexes/codeindex_flutter.json`
 - `.ai/indexes/symbols/flutter_symbols.json`
 
-When `codeindex_flutter.json` uses `schema: "flutter-index-manifest-v2"`, treat it as a manifest. Keep its declared shards as the source of truth:
+When `.ai/indexes/codeindex_flutter.json` uses `schema: "flutter-index-manifest-v2"`, treat it as a manifest. Keep its declared shards as the source of truth:
 
 - `.ai/indexes/flutter/<shard>.json` for architecture/file data
 - `.ai/indexes/symbols/flutter/<shard>.json` for detailed symbols
@@ -57,7 +57,7 @@ python <skill-dir>/scripts/shard_flutter_indexes.py <project-root> --validate
 
 Do not generate shallow indexes.
 
-Do not duplicate full function-level details inside `codeindex_flutter.json`.
+Do not duplicate full function-level details inside `.ai/indexes/codeindex_flutter.json`.
 
 Function-level details must live in:
 
@@ -105,7 +105,7 @@ Ignore:
 
 # CODE INDEX RESPONSIBILITY
 
-`codeindex_flutter.json` is the macro-level architecture index.
+`.ai/indexes/codeindex_flutter.json` is the macro-level architecture index.
 
 It should contain:
 
@@ -247,7 +247,7 @@ Line ranges and caller/callee details must be stored in:
 
 # REQUIRED JSON STRUCTURE
 
-`codeindex_flutter.json` must follow this structure:
+`.ai/indexes/codeindex_flutter.json` must follow this structure:
 
 ```json
 {
@@ -294,7 +294,7 @@ Line ranges and caller/callee details must be stored in:
 
 - `.ai/indexes/symbols/flutter_symbols.json`
 
-Do not store detailed function bodies, caller/callee graphs, line ranges, or side effects inside `codeindex_flutter.json`.
+Do not store detailed function bodies, caller/callee graphs, line ranges, or side effects inside `.ai/indexes/codeindex_flutter.json`.
 
 ---
 
@@ -507,7 +507,7 @@ ALWAYS update:
 - caller/callee relationships
 - related flows
 - related feature indexes
-- `codeindex_flutter.json` references if affected
+- `.ai/indexes/codeindex_flutter.json` references if affected
 
 Never leave symbol indexes outdated.
 
@@ -581,7 +581,7 @@ when both sides exist.
 
 Before answering Flutter/Dart questions:
 
-1. Read `codeindex_flutter.json` for architecture, feature, and flow context.
+1. Read `.ai/indexes/codeindex_flutter.json` for architecture, feature, and flow context.
 2. Read `.ai/indexes/symbols/flutter_symbols.json` for exact function/class/route lookup.
 3. Search by:
    - feature name

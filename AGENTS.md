@@ -42,7 +42,7 @@ Before generating any new code, components, or modules:
 
 Maintain:
 - `.ai/indexes/CODE_INDEX_FLUTTER.md`
-- `codeindex_flutter.json` (entry index or v2 manifest)
+- `.ai/indexes/codeindex_flutter.json` (entry index or v2 manifest)
 - `.ai/indexes/symbols/flutter_symbols.json` (entry symbol index or v2 manifest)
 
 When Flutter index files use a v2 manifest schema, also maintain the declared shards in:
@@ -55,7 +55,7 @@ When Flutter index files use a v2 manifest schema, also maintain the declared sh
 
 Maintain:
 - `.ai/indexes/CODE_INDEX_ANDROID.md`
-- `codeindex_android.json` (entry index or v2 manifest)
+- `.ai/indexes/codeindex_android.json` (entry index or v2 manifest)
 - `.ai/indexes/symbols/android_symbols.json` (entry symbol index or v2 manifest)
 
 When Android index files use a v2 manifest schema, also maintain the declared shards in:
@@ -88,7 +88,7 @@ For every:
 - MethodChannel change
 
 ALWAYS update simultaneously:
-- code indexes (`.ai/indexes/CODE_INDEX_*.md` & `*.json`)
+- code indexes (`.ai/indexes/CODE_INDEX_*.md` and `.ai/indexes/codeindex_*.json`)
 - symbol indexes (`*_symbols.json`)
 - related feature indexes
 - bug memory (if applicable)
@@ -110,7 +110,7 @@ Use:
 
 Maintain:
 - `.ai/indexes/CODE_INDEX_FLUTTER.md`
-- `codeindex_flutter.json`
+- `.ai/indexes/codeindex_flutter.json`
 
 Index at function-level including:
 - widgets
@@ -146,7 +146,7 @@ Use:
 
 Maintain:
 - `.ai/indexes/CODE_INDEX_ANDROID.md`
-- `codeindex_android.json`
+- `.ai/indexes/codeindex_android.json`
 
 Index at function-level including:
 - Activities
@@ -311,7 +311,7 @@ Before fixing any bug:
 
 2. Read:
    - `.ai/bugs/BUG_INDEX.md`
-   - `bugindex.json` manifest
+   - `.ai/bugs/bugindex.json` manifest
    - only matching `.ai/bugs/<feature>/BUG-<id>.json` shards
 
 3. Search for:
@@ -337,7 +337,7 @@ If the bug is new:
 
 1. Create a new record in:
    - `.ai/bugs/<feature>/BUG-<id>.json` for complete details
-   - `.ai/bugs/BUG_INDEX.md` and `bugindex.json` for the lightweight index entry
+   - `.ai/bugs/BUG_INDEX.md` and `.ai/bugs/bugindex.json` for the lightweight index entry
 
 2. Set status:
    - `OPEN`
@@ -391,7 +391,7 @@ Read all relevant indexes and symbol maps first.
 
 Read:
 - `.ai/indexes/CODE_INDEX_FLUTTER.md`
-- `codeindex_flutter.json`
+- `.ai/indexes/codeindex_flutter.json`
 - `.ai/indexes/symbols/flutter_symbols.json`
 - declared Flutter architecture and symbol shards when the root files are v2 manifests
 
@@ -401,7 +401,7 @@ Read:
 
 Read:
 - `.ai/indexes/CODE_INDEX_ANDROID.md`
-- `codeindex_android.json`
+- `.ai/indexes/codeindex_android.json`
 - `.ai/indexes/symbols/android_symbols.json`
 - declared Android architecture and symbol shards when the root files are v2 manifests
 
@@ -411,7 +411,7 @@ Read:
 
 Read:
 - `.ai/bugs/BUG_INDEX.md`
-- `bugindex.json`
+- `.ai/bugs/bugindex.json`
 - matching bug shard files declared by the manifest
 
 ---
