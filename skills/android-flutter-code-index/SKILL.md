@@ -5,6 +5,16 @@ description: Creates architecture-level Flutter/Dart code indexes and maintains 
 
 # FLUTTER / DART CODE INDEXING SKILL
 
+## GLOBAL V3 SHARDING POLICY
+
+Always activate `symbol-indexing` with this skill and apply its `references/sharding-policy.md` contract when creating, migrating, rebalancing, or validating indexes.
+
+Read legacy monolithic and v2 indexes, but emit `flutter-index-manifest-v3` and `flutter-symbol-manifest-v3` on `--rebalance`. V3 separates architecture, flows, features, symbols, and symbol routes so one screen or controller cannot force an entire feature into one oversized JSON file.
+
+Partition Flutter symbols by module, feature, then concern. Prefer these concerns when detected: lifecycle/UI, state, navigation, input/picking, generation/processing, preview, result, permission, storage/data, API/network, ads, billing, and platform bridge. Use owner-based fallback only after semantic detection. Allow methods from one Widget, State, Controller, or ViewModel to live in different concern shards.
+
+Enforce the global limits: root manifests at most 500 lines; architecture/flow/feature shards at most 600 lines; symbol shards at most 1,200 lines, 20 symbols, and 64 KiB. Treat a hard-limit violation as failure. Preserve full metadata only in the owning symbol shard and connect other shards with stable `symbol_ref`, `shard_ref`, and `depends_on` links.
+
 You are a Flutter/Dart Codebase Indexing Agent.
 
 Your responsibility is to maintain two separate retrieval layers:
@@ -40,20 +50,27 @@ Maintain these entry files:
 - `.ai/indexes/codeindex_flutter.json`
 - `.ai/indexes/symbols/flutter_symbols.json`
 
-When `.ai/indexes/codeindex_flutter.json` uses `schema: "flutter-index-manifest-v2"`, treat it as a manifest. Keep its declared shards as the source of truth:
+When `.ai/indexes/codeindex_flutter.json` uses a v2 or v3 manifest schema, treat it as an entry point. Follow every declared shard reference.
 
 - `.ai/indexes/flutter/<shard>.json` for architecture/file data
+- `.ai/indexes/flutter/flows/<shard>.json` for flow data in v3
+- `.ai/indexes/flutter/features/<shard>.json` for feature data in v3
 - `.ai/indexes/symbols/flutter/<shard>.json` for detailed symbols
+- `.ai/indexes/symbols/flutter/routes/<shard>.json` for symbol routes in v3
 - `.ai/indexes/symbols/flutter_symbols.json` as the symbol manifest
 
-Never overwrite a v2 manifest with a legacy monolithic index. After Dart additions, moves, renames, route changes, or refactors, update affected shard content, then run:
+Never flatten a v2 or v3 manifest into a legacy monolithic index. After Dart additions, moves, renames, route changes, or refactors, update affected content, then run:
 
 ```powershell
 python <skill-dir>/scripts/shard_flutter_indexes.py <project-root> --rebalance
 python <skill-dir>/scripts/shard_flutter_indexes.py <project-root> --validate
 ```
 
-`--validate` checks manifest/shard integrity only. Compare indexed paths with the source tree after structural refactors.
+The Flutter sharder partitions symbols by semantic concern and may place symbols from one source file into different shards. It must not split one symbol record or duplicate its full metadata.
+
+When a project already has a v2 or v3 manifest, `--rebalance` must load all declared shards, rebuild the shard set, update both manifests, and remove stale generated shard files before `--validate` is run.
+
+`--validate` must check manifest/shard integrity, hard limits, architecture/symbol coverage, source paths, line ranges, explicit cross-shard links, counts, and UTF-8. Compare declared product-code coverage with the source tree after structural refactors.
 
 Do not generate shallow indexes.
 

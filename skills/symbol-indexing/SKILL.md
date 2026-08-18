@@ -17,6 +17,12 @@ The goal is:
 - support feature flow tracing
 - connect Flutter and native Android symbols
 
+## Global sharding contract
+
+Read and apply [references/sharding-policy.md](references/sharding-policy.md) whenever creating, migrating, rebalancing, or validating indexes. This policy is the global source of truth for scope levels, file limits, semantic partitioning, cross-shard identity, v2 compatibility, v3 output, and safe replacement.
+
+Platform indexing skills may define Android- or Flutter-specific concern detection. They must preserve the global hard limits and link contract.
+
 ---
 
 # Persistent Symbol Files
@@ -33,12 +39,14 @@ For mixed Flutter + native Android projects, maintain both.
 
 ## Manifest And Shard Awareness
 
-When a root symbol file has a v2 manifest schema, it is an entry point only. Keep detailed symbols in the shard files declared by that manifest; do not replace the manifest with a flat `symbols` array.
+When a root symbol file has a v2 or v3 manifest schema, it is an entry point only. Keep detailed symbols in the shard files declared by that manifest; do not replace the manifest with a flat `symbols` array.
 
 - Android: `.ai/indexes/symbols/android_symbols.json` + `.ai/indexes/symbols/android/*.json`
 - Flutter: `.ai/indexes/symbols/flutter_symbols.json` + `.ai/indexes/symbols/flutter/*.json`
 
 After a rename, move, package change, route change, or structural refactor, update affected symbols and caller/callee links. Then run the platform sharding script with `--rebalance` followed by `--validate`. Validation confirms shard integrity, so also compare symbol `file` paths against the source tree.
+
+For v3 manifests, resolve detailed data through bounded architecture, flow, feature, symbol, and symbol-route shards. Use `symbol_id`, `symbol_ref`, `shard_ref`, and `depends_on` rather than copying symbol metadata across shards. A source file may contribute symbols to multiple concern shards.
 
 ---
 

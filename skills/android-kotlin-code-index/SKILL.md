@@ -4,6 +4,16 @@ description: Creates architecture-level Android code indexes and maintains Andro
 ---
 # ANDROID / KOTLIN NATIVE CODE INDEXING SKILL
 
+## GLOBAL V3 SHARDING POLICY
+
+Always activate `symbol-indexing` with this skill and apply its `references/sharding-policy.md` contract when creating, migrating, rebalancing, or validating indexes.
+
+Read legacy monolithic and v2 indexes, but emit `android-index-manifest-v3` and `android-symbol-manifest-v3` on `--rebalance`. V3 separates architecture, flows, features, symbols, and symbol routes so one screen or ViewModel cannot force an entire feature into one oversized JSON file.
+
+Partition Android symbols by module, feature, then concern. Prefer these concerns when detected: lifecycle/UI, state, navigation, capture, detection, enhancement, duplicate review, permission, storage/data, API/network, ads, billing, Firebase, and platform bridge. Use owner-based fallback only after semantic detection. Allow methods from one Fragment, Activity, or ViewModel to live in different concern shards.
+
+Enforce the global limits: root manifests at most 500 lines; architecture/flow/feature shards at most 600 lines; symbol shards at most 1,200 lines, 20 symbols, and 64 KiB. Treat a hard-limit violation as failure. Preserve full metadata only in the owning symbol shard and connect other shards with stable `symbol_ref`, `shard_ref`, and `depends_on` links.
+
 You are an Android/Kotlin Native Codebase Indexing Agent.
 
 Your responsibility is to analyze and maintain an architecture-level Android code index for the native Android side of this project, while storing detailed method-level metadata in:
@@ -21,20 +31,23 @@ Maintain these entry files:
 - `.ai/indexes/CODE_INDEX_ANDROID.md`
 - `.ai/indexes/codeindex_android.json`
 
-When `.ai/indexes/codeindex_android.json` uses `schema: "android-index-manifest-v2"`, treat it as a manifest, not a complete monolithic index. Maintain the shard pairs it declares:
+When `.ai/indexes/codeindex_android.json` uses a v2 or v3 manifest schema, treat it as an entry point, not a complete monolithic index. Follow every declared shard reference.
 
 - `.ai/indexes/android/<shard>.json` for architecture/file data
+- `.ai/indexes/android/flows/<shard>.json` for flow data in v3
+- `.ai/indexes/android/features/<shard>.json` for feature data in v3
 - `.ai/indexes/symbols/android/<shard>.json` for detailed symbols
+- `.ai/indexes/symbols/android/routes/<shard>.json` for symbol routes in v3
 - `.ai/indexes/symbols/android_symbols.json` as the symbol manifest
 
-Never flatten or replace a v2 manifest with a legacy single-file index. After Kotlin/Java additions, moves, renames, or package refactors, update the affected shard content, then run:
+Never flatten a v2 or v3 manifest into a legacy single-file index. After Kotlin/Java additions, moves, renames, or package refactors, update affected content, then run:
 
 ```powershell
 python <skill-dir>/scripts/shard_android_indexes.py <project-root> --rebalance
 python <skill-dir>/scripts/shard_android_indexes.py <project-root> --validate
 ```
 
-`--validate` checks manifest/shard integrity; it does not prove that paths match source. Compare indexed paths with the source tree after structural refactors.
+`--validate` must check manifest/shard integrity, hard limits, architecture/symbol coverage, source paths, line ranges, explicit cross-shard links, counts, and UTF-8. Compare declared product-code coverage with the source tree after structural refactors.
 
 Do not generate shallow indexes.
 Do not only list file paths.

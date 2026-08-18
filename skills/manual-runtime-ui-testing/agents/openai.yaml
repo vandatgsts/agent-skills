@@ -1,0 +1,7 @@
+interface:
+  display_name: "Manual Runtime UI Testing"
+  short_description: "Kiem tra UI runtime theo lenh thu cong"
+  default_prompt: "Use $manual-runtime-ui-testing to inspect the running application UI."
+
+policy:
+  allow_implicit_invocation: false

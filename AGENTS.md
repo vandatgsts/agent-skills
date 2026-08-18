@@ -3,6 +3,9 @@
 - Always respond in Vietnamese.
 - Indexes, symbol files, and bug memory files are part of the source of truth.
 - Never leave them outdated after any code modification or generation.
+- Do not run `flutter analyze` or `dart analyze` automatically after code changes.
+- After finishing code changes, report completion so the user can run the app/build and send back any remaining errors.
+- Run Flutter/Dart analyzers only when the user explicitly requests them.
 
 ---
 
@@ -19,12 +22,7 @@ Whenever initializing a new workspace or starting a new session in a project:
    - `flutter-code-indexing`
    - `android-kotlin-native-indexing`
    - `symbol-indexing`
-   - `runtime-ui-inspection` when a running app surface is available for UI validation
-   - `android-compose-ui` when changing Jetpack Compose presentation
-   - `android-testing` when validating behavior or a bug fix
-   - `flutter-testing` when validating Flutter behavior or a Flutter bug fix
-   - `mobile-ads-orchestration` when changing or debugging ads, rewards, premium ad removal, or ad loading UI
-   - `custom-native-ads` when creating or changing a custom native ad placement
+   - `runtime-ui-inspection` only when runtime UI validation is explicitly requested or required to diagnose the issue
 
 3. Generate or verify all required indexes and symbol maps simultaneously.
 
@@ -308,25 +306,23 @@ Maintain symbol links between:
 
 # Runtime UI Inspection Rules
 
-When a user reports a visual, layout, state-rendering, navigation, tap-target, loading, empty, error, or accessibility issue in a running app:
+When runtime UI inspection has been explicitly requested or is necessary because static inspection is insufficient for a visual, layout, state-rendering, navigation, tap-target, loading, empty, error, or accessibility issue:
 
-1. Activate `runtime-ui-inspection`.
-2. Capture a fresh screenshot before changing source code.
-3. Save temporary evidence under `.ai/ui-inspections/<timestamp>/`.
-4. Inspect the rendered UI, then trace the affected route, state, and UI symbol through indexes.
-5. Re-capture the same scenario after a fix; do not treat a successful build as visual verification.
+1. Capture a fresh screenshot before changing source code.
+2. Save temporary evidence under `.ai/ui-inspections/<timestamp>/`.
+3. Inspect the rendered UI, then trace the affected route, state, and UI symbol through indexes.
+4. Re-capture the same scenario after a fix; do not treat a successful build as visual verification.
 
 Never capture or retain unrelated windows, secrets, personal data, or notifications.
 
 ---
 
-# Mobile Ads Rules
+# Optional Skill Activation Rules
 
-When a full-screen ad (interstitial, rewarded, or app-open) is loading for display, show a single app-level loading overlay over the app and block duplicate interaction. Dismiss it only when the ad is handed to the SDK for display, fails, times out, or is cancelled.
-
-Banner and native ads must not use the global loading overlay. Keep their layouts stable with local placeholders or skeletons at their placements.
-
-For custom native ads, bind only SDK-provided assets, preserve attribution/AdChoices and SDK click handling, and destroy the placement view with its owner lifecycle.
+- Do not activate `runtime-ui-inspection` automatically. Use it only when the user requests a runtime screenshot/visual validation, or when static inspection cannot diagnose a reported runtime UI issue.
+- Do not activate `git-workflow-and-versioning` automatically for ordinary code changes. Use it only for commits, branches, merges, conflict resolution, release/versioning work, or when the user explicitly requests Git workflow guidance.
+- Activate other skills only when their trigger clearly matches the task or the user explicitly requests them.
+- For routine code changes, use the lightweight flow: inspect relevant files, modify, format, run targeted validation, and report the result.
 
 ---
 
@@ -336,17 +332,15 @@ For custom native ads, bind only SDK-provided assets, preserve attribution/AdCho
 
 Before fixing any bug:
 
-1. ALWAYS activate:
-   - `bug-memory-tracking`
-   - `debugging-and-error-recovery`
-   - `runtime-ui-inspection` when the report concerns rendered UI or interaction behavior
+1. Always activate `bug-memory-tracking` for bug diagnosis or fixes.
+2. Activate `runtime-ui-inspection` only when runtime validation is explicitly requested or static inspection is insufficient for a rendered UI/interaction issue.
 
-2. Read:
+3. Read:
    - `.ai/bugs/BUG_INDEX.md`
    - `.ai/bugs/bugindex.json` manifest
    - only matching `.ai/bugs/<feature>/BUG-<id>.json` shards
 
-3. Search for:
+4. Search for:
    - similar symptoms
    - related crashes
    - regressions
@@ -354,7 +348,7 @@ Before fixing any bug:
    - related affected files/functions
    - related symbols
 
-4. Reuse:
+5. Reuse:
    - known root causes
    - verified fixes
    - stable implementations
@@ -481,12 +475,6 @@ Only open full source files if:
 - code modifications/generations are required
 
 Otherwise rely on semantic indexes and symbol tables first.
-
----
-
-# Review Rules
-
-Before committing, merging, or releasing a non-trivial change, activate `code-review-and-quality`. Verify the relevant diff, build/test result, and runtime evidence before marking the work complete.
 
 ---
 
