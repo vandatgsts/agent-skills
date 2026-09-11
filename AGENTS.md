@@ -326,6 +326,14 @@ Never capture or retain unrelated windows, secrets, personal data, or notificati
 
 ---
 
+# Hybrid Bug Memory & Prevention Architecture
+
+Tri thức xử lý lỗi được quản lý theo mô hình 2 tầng (Hybrid Model):
+- **Tầng 1 - Project Level (`<project>/.ai/bugs/`)**: Chứa chi tiết thực thi (hồ sơ bệnh án cụ thể): manifest (`bugindex.json`, `BUG_INDEX.md`) và shards (`.ai/bugs/<feature>/BUG-<id>.json`) gắn trực tiếp với mã nguồn, symbols, stacktrace và verification steps của từng dự án.
+- **Tầng 2 - Global Level (`~/.gemini/GLOBAL_BUG_PATTERNS.md`)**: Chứa các quy tắc vàng (Golden Rules) và Anti-patterns đã được khái quát hóa từ các lỗi thực tế để áp dụng phòng ngừa lỗi sớm trên tất cả các dự án.
+
+---
+
 # Bug Resolution Workflow
 
 ## Pre-Fix Check
@@ -336,9 +344,9 @@ Before fixing any bug:
 2. Activate `runtime-ui-inspection` only when runtime validation is explicitly requested or static inspection is insufficient for a rendered UI/interaction issue.
 
 3. Read:
-   - `.ai/bugs/BUG_INDEX.md`
-   - `.ai/bugs/bugindex.json` manifest
-   - only matching `.ai/bugs/<feature>/BUG-<id>.json` shards
+   - Project-level: `.ai/bugs/BUG_INDEX.md` and `.ai/bugs/bugindex.json`
+   - Matching shard: `.ai/bugs/<feature>/BUG-<id>.json`
+   - Global-level: `~/.gemini/GLOBAL_BUG_PATTERNS.md` (để đối chiếu các Anti-pattern kinh điển)
 
 4. Search for:
    - similar symptoms
@@ -352,6 +360,7 @@ Before fixing any bug:
    - known root causes
    - verified fixes
    - stable implementations
+   - global prevention patterns (~/.gemini/GLOBAL_BUG_PATTERNS.md)
 
 Avoid repeating failed debugging attempts.
 
@@ -362,13 +371,13 @@ Avoid repeating failed debugging attempts.
 If the bug is new:
 
 1. Create a new record in:
-   - `.ai/bugs/<feature>/BUG-<id>.json` for complete details
-   - `.ai/bugs/BUG_INDEX.md` and `.ai/bugs/bugindex.json` for the lightweight index entry
+   - .ai/bugs/<feature>/BUG-<id>.json for complete details
+   - .ai/bugs/BUG_INDEX.md and .ai/bugs/bugindex.json for the lightweight index entry
 
 2. Set status:
-   - `OPEN`
+   - OPEN
    or
-   - `INVESTIGATING`
+   - INVESTIGATING
 
 3. Record:
    - symptoms
@@ -395,14 +404,17 @@ After fixing a bug:
    - regression notes
 
 2. Change status:
-   - `FIXED`
+   - FIXED
    or
-   - `VERIFIED`
+   - VERIFIED
 
 3. If applicable:
    - link related bugs
    - mark regressions
    - document risky areas
+
+4. **Pattern Promotion (Hybrid Rule)**:
+   - Nếu nguyên nhân gốc và giải pháp mang tính quy luật chung hoặc có nguy cơ tái diễn ở các dự án khác, đúc kết một quy tắc vàng (Golden Rule) hoặc Anti-pattern mới bổ sung vào ~/.gemini/GLOBAL_BUG_PATTERNS.md.
 
 ---
 
@@ -416,9 +428,9 @@ Read all relevant indexes and symbol maps first.
 # Flutter Retrieval Sources
 
 Read:
-- `.ai/indexes/CODE_INDEX_FLUTTER.md`
-- `.ai/indexes/codeindex_flutter.json`
-- `.ai/indexes/symbols/flutter_symbols.json`
+- .ai/indexes/CODE_INDEX_FLUTTER.md
+- .ai/indexes/codeindex_flutter.json
+- .ai/indexes/symbols/flutter_symbols.json
 - declared Flutter architecture and symbol shards when the root files are v2 manifests
 
 ---
