@@ -1,79 +1,154 @@
-# Global index sharding policy
+# Direct V4 index policy
 
-Apply this policy to every generated or maintained Android and Flutter index. Platform skills may add classification rules, but they must not weaken these limits.
+This policy is the storage and validation contract shared by Android and Flutter indexing.
 
-## Scope levels
+## Core invariants
 
-- `full`: Index architecture plus important symbols, callers/callees, state, side effects, lifecycle, and flows for product code and internally maintained modules.
-- `boundary`: Index only public entry points, APIs used by product code, callbacks, side effects, and threading contracts for vendored or rarely modified modules.
-- `excluded`: Ignore generated output, build output, caches, samples, and unused vendored internals.
-- Promote a boundary package to `full` while diagnosing or modifying its internals. Keep promoted records current afterward.
+- Source code is the only bootstrap input. Do not create an aggregate architecture or symbol JSON as an intermediate artifact.
+- One source update authoritatively replaces every architecture and symbol record owned by that source.
+- Store each full symbol record exactly once.
+- Use deterministic route buckets for lookup by source path, symbol ID, and qualified name.
+- Keep platform entry manifests bounded; they declare layout and statistics rather than enumerating every shard.
+- A complete index uses only V4 schemas. Reject any other schema instead of converting it.
 
-Record scope rules in the platform manifest under `index_scope`. Coverage validation applies according to the declared level.
+## Entry manifests
 
-## File limits
+Architecture manifests use `code-index-manifest-v4`. Symbol manifests use `code-symbol-manifest-v4`.
+
+Each manifest records:
+
+- platform and language
+- generation and update time
+- source scope
+- directory layout and route-bucket strategy
+- counts needed for integrity checks
+- the path of its paired manifest
+
+Android and Flutter use the same schemas while keeping their platform manifests and shard directories separate.
+
+## Source-owned layout
+
+The platform wrapper supplies the architecture and symbol roots. The engine writes:
+
+```text
+<architecture-root>/architecture/<module>/<feature>/<source-id>.json
+<architecture-root>/flows/<record-id>.json
+<architecture-root>/features/<record-id>.json
+<architecture-root>/bridges/<record-id>.json
+<symbol-root>/shards/<module>/<feature>/<concern>/<source-id>-<chunk>.json
+<symbol-root>/routes/source/<bucket>.json
+<symbol-root>/routes/symbol/<bucket>.json
+<symbol-root>/routes/qualified/<bucket>.json
+```
+
+Symbols from one source may belong to several concern shards. When one source/concern group exceeds a hard limit, split only that group into numbered chunks.
+
+## Update envelope
+
+The `upsert` command accepts a JSON object with schema `code-index-update-v4`:
+
+```json
+{
+  "schema": "code-index-update-v4",
+  "project_metadata": {
+    "project_name": "Example"
+  },
+  "summary_markdown": "# Example Code Index\n\nArchitecture summary.\n",
+  "sources": [
+    {
+      "path": "app/src/main/java/example/MainActivity.kt",
+      "architecture": {
+        "layer": "presentation/activity",
+        "purpose": "Application entry activity",
+        "related_features": ["launcher"]
+      },
+      "symbols": [
+        {
+          "name": "onCreate",
+          "qualified_name": "MainActivity.onCreate",
+          "type": "lifecycle_method",
+          "owner": "MainActivity",
+          "signature": "override fun onCreate(savedInstanceState: Bundle?)",
+          "start_line": 20,
+          "end_line": 42,
+          "calls": [],
+          "called_by": [],
+          "reads_state": [],
+          "writes_state": [],
+          "side_effects": [],
+          "related_symbols": [],
+          "related_files": [],
+          "tags": [],
+          "risks": []
+        }
+      ]
+    }
+  ],
+  "delete_sources": [],
+  "flows": [],
+  "features": [],
+  "bridges": [],
+  "delete_flow_ids": [],
+  "delete_feature_ids": [],
+  "delete_bridge_ids": []
+}
+```
+
+Every flow, feature, and bridge must have a stable `id`. Omitted arrays mean no change. A source included in `sources` is replaced even if its symbol array is empty.
+
+`init` creates a minimal Markdown summary. Supply `summary_markdown` when architecture, feature, or flow documentation changes; the engine writes it in the same transaction as affected shards and manifests.
+
+## Identity and routes
+
+The engine derives `symbol_id` from platform, normalized source path, qualified name, and normalized signature. Line numbers are excluded from identity.
+
+- Source routes record source hash, architecture shard, symbol shards, and owned symbol IDs.
+- Symbol routes map `symbol_id` to qualified name, source, owning shard, and shard path.
+- Qualified-name routes may contain multiple targets for overloaded or repeated names.
+- Relationship fields store qualified names. Resolve them through routes at retrieval time so a moved symbol does not require rewriting unrelated shards.
+
+## Scope
+
+- `full`: every included product source must have one source route and architecture shard.
+- `boundary`: index public entry points, callbacks, side effects, and threading contracts for external or rarely modified modules.
+- `excluded`: generated output, build output, caches, samples, and unused external internals.
+
+The manifest declares source globs and exclusions. Complete validation compares `full` scope routes with the source tree.
+
+## Limits
 
 Measure UTF-8 JSON serialized with two-space indentation and a trailing newline.
 
-| File | Warn | Hard limit |
+| File | Warning | Hard limit |
 |---|---:|---:|
 | Root manifest | 300 lines | 500 lines |
-| Architecture or flow shard | 400 lines | 600 lines |
+| Architecture, route, flow, feature, or bridge shard | 400 lines | 600 lines |
 | Symbol shard | 800 lines or 15 symbols | 1,200 lines or 20 symbols |
-| Any shard | 40 KiB | 64 KiB |
+| Any non-root shard | 40 KiB | 64 KiB |
 
-Treat any exceeded hard limit as validation failure. Do not minify JSON to evade a line limit. Compact oversized records or split their semantic responsibility. A single record that cannot fit is invalid and must be redesigned.
+A hard-limit violation fails the operation. Do not minify JSON to evade limits. A single record that cannot fit must be reduced or redesigned.
 
-## Semantic partitioning
+## Atomic updates
 
-Partition in this order:
+Stage every changed payload in a sibling temporary file. Write a transaction journal, replace data and route shards, replace entry manifests last, then delete unreferenced source-owned shards. On the next command, finish any journaled transaction before reading manifests.
 
-1. platform
-2. module
-3. feature
-4. sub-feature or flow concern
-5. numbered chunk only when one concern still exceeds a hard limit
+Never delete paths outside the project root. Only delete shards explicitly owned by a source route or deterministic named-record path.
 
-Prefer names such as `feature-camera--capture`, `feature-camera--detection`, and `feature-camera--duplicate-review`. Do not create opaque `feature-camera-1` chunks until semantic partitioning has been exhausted.
+## Validation
 
-Do not force every symbol from one source file into the same shard. Large screens, controllers, fragments, and view models commonly span several concerns. Store each symbol exactly once in its owning shard.
+Complete validation rejects:
 
-## Links and identity
+- unsupported schemas or platform mismatches
+- malformed UTF-8 and common mojibake sequences
+- missing, duplicate, or mismatched source and symbol routes
+- duplicate symbol IDs
+- nonexistent source files or stale source hashes
+- invalid and out-of-range line ranges
+- missing or orphan architecture/symbol shards
+- route targets that disagree with owning shards
+- duplicate flow, feature, or bridge IDs
+- incorrect manifest counts
+- hard-limit violations
+- missing product-source coverage for `full` scope
 
-- Give every symbol a stable `symbol_id` and an owning `shard_ref`.
-- Use `symbol_ref` plus `shard_ref` for explicit cross-shard links.
-- Keep `qualified_name` for human lookup and legacy compatibility.
-- Declare shard-level `depends_on` links derived from resolved callers, callees, related symbols, flows, routes, and platform bridges.
-- Store symbol routes in bounded route shards. Do not grow the root manifest with an unbounded symbol map.
-- Never duplicate full symbol metadata to make another shard self-contained.
-
-## Schema compatibility
-
-- Read legacy monolithic indexes and v2 manifests.
-- Emit v3 manifests on `--rebalance`.
-- Preserve project metadata that is not owned by the sharder.
-- Move large flow and feature collections into bounded shards instead of retaining them in the root manifest.
-- Never flatten v2 or v3 shards back into a monolithic index.
-
-## Safe rebalance
-
-1. Load all declared source shards.
-2. Verify architecture coverage before generating output: every indexed symbol file must have an architecture record.
-3. Build all v3 payloads in memory.
-4. Validate identity, references, limits, counts, paths, line ranges, and UTF-8 before replacing existing files.
-5. Write temporary sibling files, atomically replace targets, then remove only stale generated shards.
-6. Run `--validate` after replacement.
-
-Validation must reject:
-
-- missing or duplicate shard IDs
-- duplicate symbols or files
-- mismatched manifest counts
-- unresolved explicit `symbol_ref` or `shard_ref`
-- symbols whose source file lacks architecture coverage
-- nonexistent source paths
-- invalid or out-of-range source line ranges
-- malformed UTF-8 or common mojibake sequences
-- shards over a hard limit
-
-Warnings must identify shards approaching soft limits and summarize coverage by declared scope.
+Ordinary upserts validate the changed records and touched route buckets. Run complete validation after moves, package changes, bulk generation, or changes to indexing rules.

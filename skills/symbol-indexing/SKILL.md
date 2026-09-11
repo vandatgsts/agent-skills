@@ -1,147 +1,69 @@
 ---
 name: symbol-indexing
-description: Builds and maintains global symbol lookup indexes for Flutter/Dart and Android Kotlin/Java projects. Use when you need fast lookup of classes, methods, functions, routes, state variables, API calls, MethodChannels, callbacks, or caller/callee relationships without reopening full source files.
+description: Builds and incrementally maintains direct V4 symbol indexes for Flutter/Dart and Android Kotlin/Java without an aggregate intermediate index. Use for fast symbol lookup, caller/callee tracing, state and side-effect analysis, routes, callbacks, and platform bridges.
 ---
 
-# SYMBOL INDEXING SKILL
+# Direct V4 symbol indexing
 
-You are a Symbol Indexing Agent.
+Maintain symbol data as source-owned semantic shards. Never construct an aggregate symbol collection before writing shards.
 
-Your responsibility is to build and maintain fast lookup indexes for all important named code entities in the project.
+Use this skill together with the platform skill:
 
-The goal is:
-- find functions/classes quickly
-- reduce token usage
-- avoid reopening full source files
-- support caller/callee tracing
-- support feature flow tracing
-- connect Flutter and native Android symbols
+- `flutter-code-indexing` for Dart and Flutter.
+- `android-kotlin-native-indexing` for Kotlin and Java.
 
-## Global sharding contract
+Read [references/sharding-policy.md](references/sharding-policy.md) before initializing, updating, deleting, or validating an index.
 
-Read and apply [references/sharding-policy.md](references/sharding-policy.md) whenever creating, migrating, rebalancing, or validating indexes. This policy is the global source of truth for scope levels, file limits, semantic partitioning, cross-shard identity, v2 compatibility, v3 output, and safe replacement.
+## Persistent entry points
 
-Platform indexing skills may define Android- or Flutter-specific concern detection. They must preserve the global hard limits and link contract.
+- Flutter architecture manifest: `.ai/indexes/codeindex_flutter.json`
+- Flutter symbol manifest: `.ai/indexes/symbols/flutter_symbols.json`
+- Android architecture manifest: `.ai/indexes/codeindex_android.json`
+- Android symbol manifest: `.ai/indexes/symbols/android_symbols.json`
 
----
+The entry points contain bounded metadata and layout declarations only. Detailed records live in source-owned shards and deterministic route buckets.
 
-# Persistent Symbol Files
+## Update contract
 
-Always maintain:
+Analyze each changed source file and submit one `code-index-update-v4` record. A source update is an authoritative replacement for that file: it replaces its architecture record, symbols, routes, and source hash together.
 
-## Flutter
-- `.ai/indexes/symbols/flutter_symbols.json`
+Use the platform wrapper:
 
-## Android Native
-- `.ai/indexes/symbols/android_symbols.json`
+```powershell
+python <platform-skill>/scripts/index_<platform>_v4.py <project-root> upsert --input <update.json>
+```
 
-For mixed Flutter + native Android projects, maintain both.
+For a deleted source, use `delete-source`. Run `validate` after structural changes and before reporting index maintenance complete.
 
-## Manifest And Shard Awareness
+Use `lookup --qualified-name`, `lookup --symbol-id`, or `lookup --source`; add `--record` only when the owning data is needed.
 
-When a root symbol file has a v2 or v3 manifest schema, it is an entry point only. Keep detailed symbols in the shard files declared by that manifest; do not replace the manifest with a flat `symbols` array.
+## Symbols
 
-- Android: `.ai/indexes/symbols/android_symbols.json` + `.ai/indexes/symbols/android/*.json`
-- Flutter: `.ai/indexes/symbols/flutter_symbols.json` + `.ai/indexes/symbols/flutter/*.json`
+Index important named code entities, including classes, methods, constructors, fields, state, routes, API calls, lifecycle methods, callbacks, services, repositories, managers, platform-channel calls, and constants.
 
-After a rename, move, package change, route change, or structural refactor, update affected symbols and caller/callee links. Then run the platform sharding script with `--rebalance` followed by `--validate`. Validation confirms shard integrity, so also compare symbol `file` paths against the source tree.
+Every symbol record must include:
 
-For v3 manifests, resolve detailed data through bounded architecture, flow, feature, symbol, and symbol-route shards. Use `symbol_id`, `symbol_ref`, `shard_ref`, and `depends_on` rather than copying symbol metadata across shards. A source file may contribute symbols to multiple concern shards.
+- `name`, `qualified_name`, `type`, `file`, `owner`, and `signature`
+- exact `start_line` and `end_line`
+- `platform`, `language`, visibility, async/suspend information
+- parameters and return type
+- callers, callees, state reads/writes, and side effects
+- related symbols/files, tags, risks, and platform-specific metadata
 
----
+The engine assigns `symbol_id` and `shard_ref`. Do not generate either field manually.
 
-# What Counts As A Symbol
+## Retrieval
 
-A symbol is any important named code entity.
+Search in this order:
 
-## Flutter / Dart Symbols
+1. Qualified-name route bucket.
+2. Symbol route bucket.
+3. Owning symbol shard.
+4. Architecture, feature, flow, or bridge shard.
+5. Source file only when the indexed metadata is insufficient or code must be edited.
 
-Track:
-- class
-- widget
-- controller
-- binding
-- service
-- repository
-- model
-- enum
-- extension
-- mixin
-- function
-- method
-- constructor
-- field
-- Rx variable
-- route
-- API method
-- API endpoint
-- MethodChannel name
-- MethodChannel method call
-- callback
-- constant
+Use source routes for reverse lookup and deletion. Resolve cross-platform references through qualified names and platform metadata instead of copying full symbol records.
 
-## Android / Kotlin Symbols
+## Maintenance invariant
 
-Track:
-- class
-- object
-- interface
-- enum
-- annotation
-- activity
-- fragment
-- viewmodel
-- service
-- receiver
-- worker
-- repository
-- manager
-- function
-- suspend function
-- extension function
-- property
-- StateFlow
-- SharedFlow
-- LiveData
-- lifecycle method
-- listener
-- callback
-- ads callback
-- billing callback
-- Firebase method
-- MethodChannel handler
-- constant
-
----
-
-# Required Symbol Schema
-
-Every symbol must include:
-
-```json
-{
-  "name": "",
-  "qualified_name": "",
-  "type": "",
-  "language": "",
-  "platform": "",
-  "file": "",
-  "owner": "",
-  "signature": "",
-  "start_line": 0,
-  "end_line": 0,
-  "visibility": "",
-  "is_async": false,
-  "is_suspend": false,
-  "parameters": [],
-  "return_type": "",
-  "calls": [],
-  "called_by": [],
-  "reads_state": [],
-  "writes_state": [],
-  "side_effects": [],
-  "related_symbols": [],
-  "related_files": [],
-  "tags": [],
-  "notes": ""
-}
+Never finish a code change with stale source hashes, line ranges, routes, caller/callee links, or architecture references. Update only affected source-owned shards; a complete validation may scan all shards but ordinary writes must remain incremental.
